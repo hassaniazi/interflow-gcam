@@ -5,6 +5,9 @@
 [![docs](https://github.com/JGCRI/rtemplate/actions/workflows/docs.yaml/badge.svg?branch=main)](https://github.com/JGCRI/rtemplate/actions/workflows/docs.yaml)
 <!-- badges: end -->
 
+# IN-DEVELOPMENT: interflow-gcam
+
+Tracking energy and water flows in the U.S. over the 21st century. We will produce Sankey diagrams using GCAM outputs for all U.S. states and sectors.
 
 # Introduction
 
