@@ -1,0 +1,242 @@
+<queries>
+<aQuery>
+<region name="USA"/>
+    <supplyDemandQuery title="USA inputs by tech">
+        <axis1 name="input">input</axis1>
+        <axis2 name="Year">demand-physical[@vintage]</axis2>
+        <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector']/*[@type='subsector']/*[@type='technology']/*[@type='input']/demand-physical/node()</xPath>
+        <comments/>
+    </supplyDemandQuery>
+</aQuery>
+<aQuery>
+    <region name="USA"/>
+	<supplyDemandQuery title="USA outputs by tech">
+    	<axis1 name="technology">technology[@name]</axis1>
+    	<axis2 name="Year">physical-output[@vintage]</axis2>
+    	<xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector']/*[@type='subsector']/*[@type='technology']/*[@type='output']/physical-output/node()</xPath>
+    	<comments/>
+	</supplyDemandQuery>
+
+</aQuery>
+<aquery>
+    <region name ="AK" />
+	<region name ="AL" />
+    <region name ="AR" />
+    <region name ="AZ" />
+	<region name ="CA" />
+    <region name ="CO" />
+    <region name ="CT" />
+	<region name ="DC" />
+    <region name ="DE" />
+    <region name ="FL" />
+	<region name ="GA" />
+    <region name ="HI" />
+    <region name ="IA" />
+	<region name ="ID" />
+    <region name ="IL" />
+    <region name ="IN" />
+	<region name ="KS" />
+    <region name ="KY" />
+    <region name ="LA" />
+	<region name ="MA" />
+    <region name ="MD" />
+    <region name ="ME" />
+	<region name ="MI" />
+    <region name ="MN" />
+    <region name ="MO" />
+	<region name ="MS" />
+    <region name ="MT" />
+    <region name ="NC" />
+    <region name ="ND" />
+	<region name ="NE" />
+    <region name ="NH" />
+    <region name ="NJ" />
+	<region name ="NM" />
+    <region name ="NV" />
+    <region name ="NY" />
+	<region name ="OH" />
+    <region name ="OK" />
+    <region name ="OR" />
+	<region name ="PA" />
+    <region name ="RI" />
+	<region name ="SC" />
+	<region name ="SD" />
+    <region name ="TN" />
+    <region name ="TX" />
+	<region name ="UT" />
+    <region name ="VA" />
+    <region name ="VT" />
+    <region name ="WA" />
+	<region name ="WI" />
+    <region name ="WV" />
+    <region name ="WY" />
+    <supplyDemandQuery title="inputs by subsector (non-electric)">
+        <axis1 name="sector">sector</axis1>
+        <axis2 name="Year">demand-physical[@vintage]</axis2>
+        <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector' and not (@name='electricity' or @name='base load generation' or 
+        @name='intermediate generation' or @name='subpeak generation' or @name='peak generation' or @name='elect_td_bld' )]/*[@type='subsector']//*[@type='input']/demand-physical/node()</xPath>
+        <comments/>
+    </supplyDemandQuery>
+</aquery>
+<aquery>
+    <region name ="AK" />
+	<region name ="AL" />
+    <region name ="AR" />
+    <region name ="AZ" />
+	<region name ="CA" />
+    <region name ="CO" />
+    <region name ="CT" />
+	<region name ="DC" />
+    <region name ="DE" />
+    <region name ="FL" />
+	<region name ="GA" />
+    <region name ="HI" />
+    <region name ="IA" />
+	<region name ="ID" />
+    <region name ="IL" />
+    <region name ="IN" />
+	<region name ="KS" />
+    <region name ="KY" />
+    <region name ="LA" />
+	<region name ="MA" />
+    <region name ="MD" />
+    <region name ="ME" />
+	<region name ="MI" />
+    <region name ="MN" />
+    <region name ="MO" />
+	<region name ="MS" />
+    <region name ="MT" />
+    <region name ="NC" />
+    <region name ="ND" />
+	<region name ="NE" />
+    <region name ="NH" />
+    <region name ="NJ" />
+	<region name ="NM" />
+    <region name ="NV" />
+    <region name ="NY" />
+	<region name ="OH" />
+    <region name ="OK" />
+    <region name ="OR" />
+	<region name ="PA" />
+    <region name ="RI" />
+	<region name ="SC" />
+	<region name ="SD" />
+    <region name ="TN" />
+    <region name ="TX" />
+	<region name ="UT" />
+    <region name ="VA" />
+    <region name ="VT" />
+    <region name ="WA" />
+	<region name ="WI" />
+    <region name ="WV" />
+    <region name ="WY" />
+    <supplyDemandQuery title="elec gen by subsector">
+        <axis1 name="subsector">subsector</axis1>
+        <axis2 name="Year">physical-output[@vintage]</axis2>
+        <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector' (:collapse:) and (@name='electricity' or 
+            @name='base load generation' or @name='intermediate generation' or @name='subpeak generation' or @name='peak generation' or @name='elect_td_bld')]/
+            *[@type='subsector' and not (@name='elect_td_bld')]//*[@type='output' (:collapse:) and not (@name='ELEC_RPS')]/
+            physical-output/node()</xPath>
+        <comments/>
+    </supplyDemandQuery>
+</aquery>
+<aQuery>
+	<region name="USA"/>
+    <supplyDemandQuery title="elec gen by USA backup electricity">
+        <axis1 name="subsector">subsector</axis1>
+        <axis2 name="Year">physical-output[@vintage]</axis2>
+        <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector' and (@name='backup_electricity' or @name='csp_backup')]/
+    *[@type='subsector']//*[@type='output']/
+    physical-output/node()</xPath>
+        <comments/>
+    </supplyDemandQuery>
+</aQuery>
+<aQuery>
+		<region name="USA"/>
+	<supplyDemandQuery title="USA regional natural gas outputs">
+    	<axis1 name="technology">technology[@name]</axis1>
+    	<axis2 name="Year">physical-output[@vintage]</axis2>
+    	<xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector' and (@name='regional natural gas')]//*[@type='output']/physical-output/node()</xPath>
+    	<comments/>
+	</supplyDemandQuery>
+</aQuery>
+<aquery>
+    <region name ="AK" />
+	<region name ="AL" />
+    <region name ="AR" />
+    <region name ="AZ" />
+	<region name ="CA" />
+    <region name ="CO" />
+    <region name ="CT" />
+	<region name ="DC" />
+    <region name ="DE" />
+    <region name ="FL" />
+	<region name ="GA" />
+    <region name ="HI" />
+    <region name ="IA" />
+	<region name ="ID" />
+    <region name ="IL" />
+    <region name ="IN" />
+	<region name ="KS" />
+    <region name ="KY" />
+    <region name ="LA" />
+	<region name ="MA" />
+    <region name ="MD" />
+    <region name ="ME" />
+	<region name ="MI" />
+    <region name ="MN" />
+    <region name ="MO" />
+	<region name ="MS" />
+    <region name ="MT" />
+    <region name ="NC" />
+    <region name ="ND" />
+	<region name ="NE" />
+    <region name ="NH" />
+    <region name ="NJ" />
+	<region name ="NM" />
+    <region name ="NV" />
+    <region name ="NY" />
+	<region name ="OH" />
+    <region name ="OK" />
+    <region name ="OR" />
+	<region name ="PA" />
+    <region name ="RI" />
+	<region name ="SC" />
+	<region name ="SD" />
+    <region name ="TN" />
+    <region name ="TX" />
+	<region name ="UT" />
+    <region name ="VA" />
+    <region name ="VT" />
+    <region name ="WA" />
+	<region name ="WI" />
+    <region name ="WV" />
+    <region name ="WY" />
+    <supplyDemandQuery title="elec energy input by subsector">
+    <axis1 name="input">input</axis1>
+    <axis2 name="Year">demand-physical[@vintage]</axis2>
+    <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector' and (@name='electricity' or @name='base load generation' or 
+               @name='intermediate generation' or @name='subpeak generation' or @name='peak generation' or @name='elect_td_bld' ) and not(contains(@name, 'water_td'))]//
+                  *[@type='subsector' and not (@name='elect_td_bld')]//
+                  *[@type='technology' (:collapse:) and not(
+                                   @name='biomass (conv)' or @name='biomass (conv CCS)' or @name='biomass (IGCC)' or @name='biomass (IGCC CCS)'
+                                   or @name='coal (conv pul)' or @name='coal (conv pul CCS)' or @name='coal (IGCC)' or @name='coal (IGCC CCS)'
+                                   or @name='gas (steam/CT)' or @name='gas (CC)' or @name='gas (CC CCS)'
+                                   or @name='refined liquids (steam/CT)' or @name='refined liquids (CC)' or @name='refined liquids (CC CCS)'
+                                   or @name='geothermal' or @name='Gen_II_LWR' or @name='Gen_III'
+                                   or @name='CSP' or @name='CSP_storage')]/
+                   *[@type='input' and not( contains( @name, 'water')) and @name != 'oil-credits']/
+                   demand-physical/node()
+                </xPath>
+    <comments/>
+    <labelRewriteList append-values="false">
+        <level name="sector">
+            <rewrite from="intermediate generation" to="electricity"/>
+            <rewrite from="peak generation" to="electricity"/>
+            <rewrite from="base load generation" to="electricity"/>
+            <rewrite from="subpeak generation" to="electricity"/>
+        </level>
+    </labelRewriteList>
+</supplyDemandQuery>
+</aquery>
+</queries>
