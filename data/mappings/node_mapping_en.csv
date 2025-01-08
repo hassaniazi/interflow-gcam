@@ -1,0 +1,21 @@
+﻿label,node,stage,hex,color_name
+Oil,0,source,#FD7575,light red
+Natural Gas,1,source,#169E70,green
+Biomass,2,source,#B92DAA,fuscia
+First Gen Biofuels,3,source,#B92D71,magenta
+Coal,4,source,#080808,dark grey
+Nuclear,5,source,#FF8100, orange
+Wind,6,source,#62C0F5,light blue
+Solar,7,source,#F7EB49,yellow
+Hydropower,8,source,#0F6092,dark blue
+Geothermal,9,source,#682598,purple
+Gas,10,mid,#8DD65E,lime
+Liquid Fuels,11,mid,#AB0000,dark red
+Electricity,12,mid,#FFBD05,marigold
+Hydrogen,13,mid,#FF96B8,pink
+Transportation-NonVehicle,14,target,#AD4C1F,rust
+Transportation-Vehicle,15,target,#AD4C1F,rust
+Industry,16,target,#B35DA3,muted purple
+Commercial,17,target,#2D95A9,teal
+Residential,18,target,#5591CC,grey blue
+CO2_removal,19,target,#080813,black
