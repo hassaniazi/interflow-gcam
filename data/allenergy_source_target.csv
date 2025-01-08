@@ -42,26 +42,6 @@ rcp45cooler_ssp3,EJ,Biomass,Electricity,2085,0.949077236918098
 rcp45cooler_ssp3,EJ,Biomass,Electricity,2090,2.032911548123621
 rcp45cooler_ssp3,EJ,Biomass,Electricity,2095,2.889282190708365
 rcp45cooler_ssp3,EJ,Biomass,Electricity,2100,4.218792064784049
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2005,1.820961911
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2010,5.26601903
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2015,37.0219783
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2020,37.83233688305
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2025,36.92953239072
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2030,34.33791730814
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2035,29.579003552099998
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2040,23.4876567259
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2045,21.865224897
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2050,23.660579552
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2055,23.609388158
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2060,24.310790403
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2065,24.899009443
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2070,23.524815019000002
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2075,24.94096104
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2080,21.415894797
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2085,17.935732219000002
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2090,15.340586687
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2095,12.652817801
-rcp45cooler_ssp3,EJ,Biomass,First Gen Biofuels,2100,10.273631419
 rcp45cooler_ssp3,EJ,Biomass,Gas,1990,0.0412077
 rcp45cooler_ssp3,EJ,Biomass,Gas,2005,0.21464
 rcp45cooler_ssp3,EJ,Biomass,Gas,2010,0.156004
@@ -813,26 +793,6 @@ rcp45cooler_ssp5,EJ,Biomass,Electricity,2085,5.794759606547799
 rcp45cooler_ssp5,EJ,Biomass,Electricity,2090,8.626666343754094
 rcp45cooler_ssp5,EJ,Biomass,Electricity,2095,10.92129487845983
 rcp45cooler_ssp5,EJ,Biomass,Electricity,2100,13.831059646911104
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2005,1.820961911
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2010,5.26601903
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2015,37.0219783
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2020,38.95298194581
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2025,39.0260038302
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2030,37.5746397679
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2035,37.40593145
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2040,39.169030476
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2045,47.93113033
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2050,59.41825906
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2055,66.15954083
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2060,74.29793352
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2065,81.67830245
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2070,84.80200029
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2075,100.9656085
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2080,105.20330682
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2085,107.41613369
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2090,115.90475734
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2095,115.8182297
-rcp45cooler_ssp5,EJ,Biomass,First Gen Biofuels,2100,116.56065099999999
 rcp45cooler_ssp5,EJ,Biomass,Gas,1990,0.0412077
 rcp45cooler_ssp5,EJ,Biomass,Gas,2005,0.21464
 rcp45cooler_ssp5,EJ,Biomass,Gas,2010,0.156004
@@ -1584,26 +1544,6 @@ rcp45hotter_ssp3,EJ,Biomass,Electricity,2085,0.83549910455836
 rcp45hotter_ssp3,EJ,Biomass,Electricity,2090,1.759090337160262
 rcp45hotter_ssp3,EJ,Biomass,Electricity,2095,2.570625562929922
 rcp45hotter_ssp3,EJ,Biomass,Electricity,2100,3.736313837588514
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2005,1.820961911
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2010,5.26601903
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2015,37.0219783
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2020,37.741781014749996
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2025,36.78900941543
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2030,34.15247276317
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2035,29.13756400685
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2040,21.9798866437
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2045,18.281658046
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2050,20.427467751
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2055,20.881383839
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2060,22.05251909
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2065,22.632199984
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2070,21.496777175
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2075,21.260724367999998
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2080,17.452377461
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2085,13.992146847999999
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2090,11.220104237
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2095,8.670869295
-rcp45hotter_ssp3,EJ,Biomass,First Gen Biofuels,2100,6.928014401
 rcp45hotter_ssp3,EJ,Biomass,Gas,1990,0.0412077
 rcp45hotter_ssp3,EJ,Biomass,Gas,2005,0.21464
 rcp45hotter_ssp3,EJ,Biomass,Gas,2010,0.156004
@@ -2355,26 +2295,6 @@ rcp45hotter_ssp5,EJ,Biomass,Electricity,2085,5.329230212108536
 rcp45hotter_ssp5,EJ,Biomass,Electricity,2090,8.032642846775088
 rcp45hotter_ssp5,EJ,Biomass,Electricity,2095,10.079491291946384
 rcp45hotter_ssp5,EJ,Biomass,Electricity,2100,12.916731086679016
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2005,1.820961911
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2010,5.26601903
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2015,37.0219783
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2020,38.81574808468
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2025,38.6614948965
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2030,36.7132264748
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2035,35.3064353408
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2040,34.140617107
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2045,40.627143939999996
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2050,53.90550559
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2055,61.351593630000004
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2060,71.39533499
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2065,77.35198933
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2070,77.96889564
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2075,90.15174338
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2080,88.55380666
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2085,90.29135409
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2090,98.53130876
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2095,99.52679328
-rcp45hotter_ssp5,EJ,Biomass,First Gen Biofuels,2100,107.51537384
 rcp45hotter_ssp5,EJ,Biomass,Gas,1990,0.0412077
 rcp45hotter_ssp5,EJ,Biomass,Gas,2005,0.21464
 rcp45hotter_ssp5,EJ,Biomass,Gas,2010,0.156004
@@ -3126,26 +3046,6 @@ rcp85cooler_ssp3,EJ,Biomass,Electricity,2085,0.0244266921902
 rcp85cooler_ssp3,EJ,Biomass,Electricity,2090,0.02680270293479
 rcp85cooler_ssp3,EJ,Biomass,Electricity,2095,0.02204680092389
 rcp85cooler_ssp3,EJ,Biomass,Electricity,2100,0.02478433847589
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2005,1.820961911
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2010,5.26601903
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2015,37.0219783
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2020,39.34358143762
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2025,38.8595542185
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2030,36.455423644199996
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2035,32.2386783419
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2040,26.1236530221
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2045,24.097122621
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2050,27.196849117
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2055,27.751622877
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2060,29.136516871
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2065,30.89711958
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2070,29.94045956
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2075,30.75015181
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2080,27.761308670000002
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2085,24.7606476
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2090,22.59160457
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2095,19.98314145
-rcp85cooler_ssp3,EJ,Biomass,First Gen Biofuels,2100,18.54650126
 rcp85cooler_ssp3,EJ,Biomass,Gas,1990,0.0412077
 rcp85cooler_ssp3,EJ,Biomass,Gas,2005,0.21464
 rcp85cooler_ssp3,EJ,Biomass,Gas,2010,0.156004
@@ -3881,26 +3781,6 @@ rcp85cooler_ssp5,EJ,Biomass,Electricity,2085,0.043131013829
 rcp85cooler_ssp5,EJ,Biomass,Electricity,2090,0.04870772236311
 rcp85cooler_ssp5,EJ,Biomass,Electricity,2095,0.053237170400000006
 rcp85cooler_ssp5,EJ,Biomass,Electricity,2100,0.0593278535
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2005,1.820961911
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2010,5.26601903
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2015,37.0219783
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2020,40.6993206032
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2025,41.8176939434
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2030,41.1491177029
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2035,42.133719529
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2040,43.339276943
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2045,52.6724877
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2050,69.98276493
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2055,79.32406688
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2060,89.94960111
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2065,99.97786945
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2070,103.96449756
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2075,117.9042997
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2080,120.9788617
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2085,125.0085724
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2090,133.1978436
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2095,137.3943248
-rcp85cooler_ssp5,EJ,Biomass,First Gen Biofuels,2100,147.2577143
 rcp85cooler_ssp5,EJ,Biomass,Gas,1990,0.0412077
 rcp85cooler_ssp5,EJ,Biomass,Gas,2005,0.21464
 rcp85cooler_ssp5,EJ,Biomass,Gas,2010,0.156004
@@ -4637,26 +4517,6 @@ rcp85hotter_ssp3,EJ,Biomass,Electricity,2085,0.024489883817249
 rcp85hotter_ssp3,EJ,Biomass,Electricity,2090,0.024649990510593998
 rcp85hotter_ssp3,EJ,Biomass,Electricity,2095,0.022706988400338
 rcp85hotter_ssp3,EJ,Biomass,Electricity,2100,0.025196102712868
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2005,1.820961911
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2010,5.26601903
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2015,37.0219783
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2020,39.08337390771
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2025,38.45759457085
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2030,35.94973850003
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2035,31.41154393
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2040,24.2789788483
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2045,20.087959263
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2050,21.567194956999998
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2055,22.286097546
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2060,23.823865654
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2065,24.574055593
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2070,25.461115733
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2075,27.92724815
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2080,29.06955381
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2085,29.3280665
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2090,28.21077865
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2095,27.49443716
-rcp85hotter_ssp3,EJ,Biomass,First Gen Biofuels,2100,27.31335135
 rcp85hotter_ssp3,EJ,Biomass,Gas,1990,0.0412077
 rcp85hotter_ssp3,EJ,Biomass,Gas,2005,0.21464
 rcp85hotter_ssp3,EJ,Biomass,Gas,2010,0.156004
@@ -5392,26 +5252,6 @@ rcp85hotter_ssp5,EJ,Biomass,Electricity,2085,0.04314713372
 rcp85hotter_ssp5,EJ,Biomass,Electricity,2090,0.048434017798695
 rcp85hotter_ssp5,EJ,Biomass,Electricity,2095,0.05344022979436
 rcp85hotter_ssp5,EJ,Biomass,Electricity,2100,0.05969616947
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2005,1.820961911
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2010,5.26601903
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2015,37.0219783
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2020,40.425095815700004
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2025,41.1655514395
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2030,39.9523362792
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2035,39.929774059
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2040,38.512738872999996
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2045,44.07058745
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2050,58.71186636
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2055,68.11390785
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2060,79.38122611
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2065,84.87885987
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2070,93.61016767
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2075,110.2976661
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2080,123.79516
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2085,135.9412799
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2090,145.7804971
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2095,158.5070189
-rcp85hotter_ssp5,EJ,Biomass,First Gen Biofuels,2100,170.3637379
 rcp85hotter_ssp5,EJ,Biomass,Gas,1990,0.0412077
 rcp85hotter_ssp5,EJ,Biomass,Gas,2005,0.21464
 rcp85hotter_ssp5,EJ,Biomass,Gas,2010,0.156004

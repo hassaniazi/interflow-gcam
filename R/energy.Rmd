@@ -405,7 +405,7 @@ write_csv(links_data, paste0("../", data_dir, 'allenergy_links_data.csv'))
 ```
 
 
-```{r fig.width=8, warning=FALSE}
+```{r fig.width=10, warning=FALSE}
 # plot sankey
 sankey_figure <- plot_ly( 
       type = "sankey",

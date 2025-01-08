@@ -2,8 +2,9 @@ sector,Target
 biomass,Biomass
 delivered biomass,Biomass
 regional biomass,Biomass
-regional biomassOil,First Gen Biofuels
-regional corn for ethanol,First Gen Biofuels
+regional biomassOil,Biomass
+regional corn for ethanol,Biomass
+regional oilcrop,Biomass
 total biomass,Biomass
 CO2 removal,CO2_removal
 process heat dac,CO2_removal

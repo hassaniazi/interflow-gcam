@@ -1,37 +1,36 @@
 Source_label,Target_label,value,Source_node,Target_node,stage,hex,color_name,rgb,rgba,link_label
-Oil,Liquid Fuels,28.4513895541,0,9,source,#FD7575,light red,"253,117,117","rgba(253,117,117, 0.5)",Oil 28.5 EJ
-Natural Gas,Gas,29.9962,1,8,source,#169E70,green,"22,158,112","rgba(22,158,112, 0.5)",Natural Gas 30 EJ
-Natural Gas,Liquid Fuels,1.55111604611,1,9,source,#169E70,green,"22,158,112","rgba(22,158,112, 0.5)",Natural Gas 1.6 EJ
-Biomass,Commercial,0.194204151963427,2,15,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 0.2 EJ
-Biomass,Electricity,0.040201153409261996,2,10,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 0 EJ
-Biomass,First Gen Biofuels,23.660579552,2,3,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 23.7 EJ
-Biomass,Gas,1.64133,2,8,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 1.6 EJ
-Biomass,Industry,1.7708653495285749,2,14,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 1.8 EJ
-Biomass,Liquid Fuels,5.1730814826272296,2,9,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 5.2 EJ
-Biomass,Residential,0.494038866280887,2,16,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 0.5 EJ
-Coal,Electricity,0.602351976641202,4,10,source,#080808,dark grey,"8,8,8","rgba(8,8,8, 0.5)",Coal 0.6 EJ
-Coal,Industry,1.3599222660306,4,14,source,#080808,dark grey,"8,8,8","rgba(8,8,8, 0.5)",Coal 1.4 EJ
-Coal,Liquid Fuels,0.4737408651216,4,9,source,#080808,dark grey,"8,8,8","rgba(8,8,8, 0.5)",Coal 0.5 EJ
-Nuclear,Electricity,1.84660278857535,5,10,source,#FF8100,orange,"255,129,0","rgba(255,129,0, 0.5)",Nuclear 1.8 EJ
-Wind,Electricity,6.999377008766161,6,10,source,#62C0F5,light blue,"98,192,245","rgba(98,192,245, 0.5)",Wind 7 EJ
-Solar,Electricity,4.00281134241124,7,10,source,#F7EB49,yellow,"247,235,73","rgba(247,235,73, 0.5)",Solar 4 EJ
-Gas,Commercial,2.907218117577085,8,15,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 2.9 EJ
-Gas,Electricity,10.415757585233903,8,10,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 10.4 EJ
-Gas,Industry,8.61253528441,8,14,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 8.6 EJ
-Gas,Liquid Fuels,0.753599499376686,8,9,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 0.8 EJ
-Gas,Residential,3.672744494635347,8,16,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 3.7 EJ
-Gas,Transportation-Vehicle,3.96600224188,8,13,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 4 EJ
-Liquid Fuels,Commercial,0.470653909589002,9,15,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 0.5 EJ
-Liquid Fuels,Electricity,0.004782526,9,10,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 0 EJ
-Liquid Fuels,Industry,7.52343195170403,9,14,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 7.5 EJ
-Liquid Fuels,Residential,0.298241805213294,9,16,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 0.3 EJ
-Liquid Fuels,Transportation-NonVehicle,6.180049010369,9,12,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 6.2 EJ
-Liquid Fuels,Transportation-Vehicle,16.8113411052,9,13,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 16.8 EJ
-Electricity,Commercial,4.3353387594088,10,15,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 4.3 EJ
-Electricity,Industry,3.57848584724,10,14,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 3.6 EJ
-Electricity,Liquid Fuels,0.1519346654293,10,9,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 0.2 EJ
-Electricity,Residential,3.648758586738,10,16,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 3.6 EJ
-Electricity,Transportation-NonVehicle,0.04854020665,10,12,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 0 EJ
-Electricity,Transportation-Vehicle,0.55814063456,10,13,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 0.6 EJ
-Hydrogen,Industry,0.004565713831502,11,14,mid,#FF96B8,pink,"255,150,184","rgba(255,150,184, 0.5)",Hydrogen 0 EJ
-Hydrogen,Transportation-Vehicle,0.24848399324,11,13,mid,#FF96B8,pink,"255,150,184","rgba(255,150,184, 0.5)",Hydrogen 0.2 EJ
+Oil,Liquid Fuels,28.4513895541,0,8,source,#FD7575,light red,"253,117,117","rgba(253,117,117, 0.5)",Oil 28.5 EJ
+Natural Gas,Gas,29.9962,1,7,source,#169E70,green,"22,158,112","rgba(22,158,112, 0.5)",Natural Gas 30 EJ
+Natural Gas,Liquid Fuels,1.55111604611,1,8,source,#169E70,green,"22,158,112","rgba(22,158,112, 0.5)",Natural Gas 1.6 EJ
+Biomass,Commercial,0.194204151963427,2,14,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 0.2 EJ
+Biomass,Electricity,0.040201153409261996,2,9,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 0 EJ
+Biomass,Gas,1.64133,2,7,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 1.6 EJ
+Biomass,Industry,1.7708653495285749,2,13,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 1.8 EJ
+Biomass,Liquid Fuels,5.1730814826272296,2,8,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 5.2 EJ
+Biomass,Residential,0.494038866280887,2,15,source,#B92DAA,fuscia,"185,45,170","rgba(185,45,170, 0.5)",Biomass 0.5 EJ
+Coal,Electricity,0.602351976641202,3,9,source,#080808,dark grey,"8,8,8","rgba(8,8,8, 0.5)",Coal 0.6 EJ
+Coal,Industry,1.3599222660306,3,13,source,#080808,dark grey,"8,8,8","rgba(8,8,8, 0.5)",Coal 1.4 EJ
+Coal,Liquid Fuels,0.4737408651216,3,8,source,#080808,dark grey,"8,8,8","rgba(8,8,8, 0.5)",Coal 0.5 EJ
+Nuclear,Electricity,1.84660278857535,4,9,source,#FF8100,orange,"255,129,0","rgba(255,129,0, 0.5)",Nuclear 1.8 EJ
+Wind,Electricity,6.999377008766161,5,9,source,#62C0F5,light blue,"98,192,245","rgba(98,192,245, 0.5)",Wind 7 EJ
+Solar,Electricity,4.00281134241124,6,9,source,#F7EB49,yellow,"247,235,73","rgba(247,235,73, 0.5)",Solar 4 EJ
+Gas,Commercial,2.907218117577085,7,14,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 2.9 EJ
+Gas,Electricity,10.415757585233903,7,9,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 10.4 EJ
+Gas,Industry,8.61253528441,7,13,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 8.6 EJ
+Gas,Liquid Fuels,0.753599499376686,7,8,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 0.8 EJ
+Gas,Residential,3.672744494635347,7,15,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 3.7 EJ
+Gas,Transportation-Vehicle,3.96600224188,7,12,mid,#8DD65E,lime,"141,214,94","rgba(141,214,94, 0.5)",Gas 4 EJ
+Liquid Fuels,Commercial,0.470653909589002,8,14,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 0.5 EJ
+Liquid Fuels,Electricity,0.004782526,8,9,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 0 EJ
+Liquid Fuels,Industry,7.52343195170403,8,13,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 7.5 EJ
+Liquid Fuels,Residential,0.298241805213294,8,15,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 0.3 EJ
+Liquid Fuels,Transportation-NonVehicle,6.180049010369,8,11,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 6.2 EJ
+Liquid Fuels,Transportation-Vehicle,16.8113411052,8,12,mid,#AB0000,dark red,"171,0,0","rgba(171,0,0, 0.5)",Liquid Fuels 16.8 EJ
+Electricity,Commercial,4.3353387594088,9,14,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 4.3 EJ
+Electricity,Industry,3.57848584724,9,13,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 3.6 EJ
+Electricity,Liquid Fuels,0.1519346654293,9,8,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 0.2 EJ
+Electricity,Residential,3.648758586738,9,15,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 3.6 EJ
+Electricity,Transportation-NonVehicle,0.04854020665,9,11,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 0 EJ
+Electricity,Transportation-Vehicle,0.55814063456,9,12,mid,#FFBD05,marigold,"255,189,5","rgba(255,189,5, 0.5)",Electricity 0.6 EJ
+Hydrogen,Industry,0.004565713831502,10,13,mid,#FF96B8,pink,"255,150,184","rgba(255,150,184, 0.5)",Hydrogen 0 EJ
+Hydrogen,Transportation-Vehicle,0.24848399324,10,12,mid,#FF96B8,pink,"255,150,184","rgba(255,150,184, 0.5)",Hydrogen 0.2 EJ
