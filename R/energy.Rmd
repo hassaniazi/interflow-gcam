@@ -286,8 +286,10 @@ losses <- Source_Target_all %>%
   mutate(Source = node, Target = "Losses", value = losses) %>%
   select(scenario, Units, Source, Target, year, value) 
 
-# add the losses back to the original dataset
-Source_Target_all %>% bind_rows(losses) -> Source_Target_all_losses
+# add the losses back to the original dataset and complete it 
+Source_Target_all_losses <- Source_Target_all %>% bind_rows(losses) %>% select(-Units) %>% 
+  complete(scenario, year, nesting(Source, Target), fill = list(value = 0)) %>% mutate(units = "EJ")
+
 ```
 
 
@@ -457,9 +459,10 @@ datatable(nodes_data, filter = 'top', rownames = FALSE, options = list(pageLengt
 
 ```{r fig.width=8, warning=FALSE}
 # save files for Kendall
-write_csv(Source_Target_all_losses, paste0("../", data_dir, 'allenergy_source_target.csv'))
-write_csv(nodes_data, paste0("../", data_dir, 'allenergy_nodes_data.csv'))
-write_csv(links_data, paste0("../", data_dir, 'allenergy_links_data.csv'))
+names(Source_Target_all_losses) <- tolower(names(Source_Target_all_losses)) 
+write_csv(Source_Target_all_losses %>% select(scenario, source, target, year, value, units), paste0("../", data_dir, 'allenergy_source_target.csv'))
+# write_csv(nodes_data, paste0("../", data_dir, 'allenergy_nodes_data.csv'))
+# write_csv(links_data, paste0("../", data_dir, 'allenergy_links_data.csv'))
 
 ```
 

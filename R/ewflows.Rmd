@@ -1,0 +1,105 @@
+---
+title: "Energy-Water Flows from the IM3 GCAM-USA Scenarios"
+author: "Hassan Niazi (hassan.niazi@pnnl.gov)"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_notebook:
+    toc: true
+    # toc_float: TRUE
+  html_document:
+    toc: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+# by default collapse/hide the code
+# knitr::opts_chunk$set(echo = FALSE)
+# set working directory to one folder up
+setwd("../")
+# getwd()
+source("./R/functions.R")
+```
+
+## For the IWPR Q1 Update (Jan 2025)
+
+-   Goal: plot a water sankey, energy sankey, energy-water sankey for Q1 update of the EW-Flows project
+
+## Energy-Water Sankey
+
+```{r fig.width=10, warning=FALSE, message=FALSE}
+# load the data
+water_source_target <- read_csv(paste0("../", data_dir, "water_source_target.csv")) 
+allenergy_source_target <- read_csv(paste0("../", data_dir, "allenergy_source_target.csv")) 
+
+allenergy_source_target
+```
+
+
+```{r fig.width=10, warning=FALSE, message=FALSE}
+unique(water_source_target$source)
+unique(water_source_target$target)
+
+# write_csv(water_source_target %>% select(source) %>% distinct(), paste0("../", data_dir, "mappings/source_mapping_w.csv"))
+# write_csv(water_source_target %>% select(target) %>% distinct(), paste0("../", data_dir, "mappings/target_mapping_w.csv"))
+
+source_mapping_w <- read_csv(paste0("../", data_dir, "mappings/source_mapping_w.csv"))
+target_mapping_w <- read_csv(paste0("../", data_dir, "mappings/target_mapping_w.csv"))
+```
+
+
+```{r fig.width=10, warning=FALSE, message=FALSE}
+water_source_target_mapped <- water_source_target %>% 
+  left_join(source_mapping_w, by = c("source")) %>% filter(!is.na(smap)) %>% select(-source, source = smap) %>% 
+  left_join(target_mapping_w, by = c("target")) %>% filter(!is.na(tmap)) %>% select(-target, target = tmap) %>%
+  group_by(scenario, source, target, year, units) %>% summarise(value = sum(value))
+
+plot_sankey(water_source_target_mapped)
+```
+
+
+```{r fig.width=10, warning=FALSE, message=FALSE}
+energy_water_source_target <- allenergy_source_target %>% 
+  rbind(water_source_target_mapped %>% mutate(value = value * 1e-1)) %>% 
+  complete(scenario, year, nesting(source, target), fill = list(value = 0)) %>% 
+  select(scenario, source, target, year, value, units)
+  
+
+plot_sankey(energy_water_source_target, "Energy-Water Flows in the US")
+
+
+write_csv(energy_water_source_target, paste0("../", data_dir, "energy_water_source_target.csv"))
+
+# TODO: can remove industry, livestock, and domestic water use layers and directly assign them to end uses industry, livestock, and residential respectively
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

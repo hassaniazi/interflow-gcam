@@ -1,0 +1,57 @@
+target,tmap
+desalination,
+groundwater,
+runoff,
+water_td_an_W,Livestock Water Use
+water_td_dom_W,Domestic Water Use
+water_td_elec_W,Electricity Water Use
+water_td_ind_W,Industry Water Use
+water_td_irr_W,Irrigation Water Use
+water_td_pri_W,Mining Water Use
+Beef,Livestock
+Dairy,Livestock
+Pork,Livestock
+Poultry,Livestock
+SheepGoat,Livestock
+municipal water,Residential
+biomass (conv CCS),Biomass
+biomass (conv),Biomass
+biomass (IGCC CCS),Biomass
+biomass (IGCC),Biomass
+coal (conv pul CCS),Coal
+coal (conv pul),Coal
+coal (IGCC CCS),Coal
+coal (IGCC),Coal
+CSP,Solar
+CSP (dry_hybrid),Solar
+gas (CC CCS),Gas
+gas (CC),Gas
+gas (CT),Gas
+gas (steam),Gas
+Gen_II_LWR,Nuclear
+Gen_III,Nuclear
+geothermal,Geothermal
+hydro,Hydropower
+PV,Solar
+refined liquids (CC),Liquid Fuels
+refined liquids (CT),Liquid Fuels
+refined liquids (steam),Liquid Fuels
+industry,Industry
+biomass,Biomass
+Corn,Biomass
+FiberCrop,Crops
+FodderHerb,Crops
+MiscCrop,Crops
+OilCrop,Biomass
+OtherGrain,Crops
+PalmFruit,Crops
+Rice,Crops
+RootTuber,Crops
+SugarCrop,Crops
+Wheat,Crops
+nuclearFuelGenII,Nuclear
+nuclearFuelGenIII,Nuclear
+regional coal,Coal
+regional natural gas,Natural Gas
+regional oil,Oil
+unconventional oil production,Oil

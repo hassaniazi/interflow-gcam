@@ -11,7 +11,7 @@ output:
     df_print: paged
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning=FALSE}
 # by default collapse/hide the code
 # knitr::opts_chunk$set(echo = FALSE)
 # set working directory to one folder up
@@ -358,8 +358,19 @@ plot_sankey(rbind(df_waterWithdrawalsByStateSectorBasin, df_waterWithdrawalsByWa
 # runoff = surface water 
 # annotations for levels (basins: HUC2)
 # can colors the map as the plotly basins 
-# avoid repeating colors 
+# avoid repeating colors
+```
 
+
+``` {r fig.width=9, warning=FALSE}
+elecGenByGenTechCoolingTech_gUSA <- getQuery(im3_epri, "elec gen by gen tech and cooling tech (incl cogen)") %>% filter_CONUSregions()
+hydro_water_req <- elecGenByGenTechCoolingTech %>%
+    filter(subsector == "hydro") %>%
+    group_by(scenario, subsector, output, year) %>%
+    summarise(value = sum(value)) %>% ungroup() %>% 
+  mutate(source = "water_td_elec_W",
+         hydro_water_req = value * 3060 * 1e-3) %>%
+  select(scenario, source, target = subsector, year, value = hydro_water_req)
 ```
 
 ## Water Diagram for USA
@@ -402,6 +413,7 @@ datatable(waterWithdrawalsByWaterSource_shares_bybasin, filter = "top")
 
 
 waterWithdrawalsByStateSectorBasin_source <- waterWithdrawalsByStateSectorBasin %>% 
+  # filter(scenario == "rcp85cooler_ssp5", year == "2050", sector == "water_td_an_W") %>%
   filter(region != "USA") %>% # exclude USA level data because it aggregated up from basin level data, but lacks the technology detail (name of the basin here)
   filter_CONUSregions(technology, basins_conus_resource) %>% # not sure why nonCONUS basins have crept in here at the technology level, but remove them 
   filter(technology != "desalination") %>% # we have desalination at the basin level in the previous plot 
@@ -418,91 +430,98 @@ datatable(waterWithdrawalsByStateSectorBasin_source, filter = "top")
 
 ```{r fig.width=10, warning=FALSE}
 # US level supply and demand
-waterWithdrawalsByStateSectorBasin_source %>% 
+waterSourceUseCategories <- waterWithdrawalsByStateSectorBasin_source %>% 
   group_by(scenario, subresource, target, year) %>% 
   summarise(value = sum(source_disagg)) %>% ungroup() %>% 
   select(scenario, source = subresource, target, year, value) %>% 
-  rbind(desal_totalUSA) %>% 
-  rename_water_use_categories() %>% 
-  plot_sankey("Water Use by Source and Category", yr = 2020) 
+  # note we are aggregating up basin-level irrigation from desalination here 
+  rbind(desal_totalUSA %>% replace_after_irr_string(target) %>% 
+          group_by(scenario, source, target, year) %>% summarise(value = sum(value)) %>% ungroup()
+        ) 
+
+plot_sankey(waterSourceUseCategories, "Water Source and Use Category")   
 
 ```
 
 ```{r fig.width=10, warning=FALSE}
-# end use by technology
-tech <- waterWithdrawalsByTech_watCat %>% 
-  # filter(sector == "electricity") %>% 
-  group_by(scenario, watcategory, technology, year) %>%
-  # clean_cooling_tech("technology", cooling_techs, cooling_techs_years) %>% 
-  summarise(value = sum(value)) %>% ungroup() %>%
-  select(scenario, source = watcategory, target = technology, year, value)
+# water source, use category, and end-use 
+waterCateogryTech <- 
+  # we will use different details for each use category 
+  rbind(
+    # electricity on tech level
+    waterWithdrawalsByTech_watCat %>% 
+      filter(watcategory == "water_td_elec_W") %>% 
+      clean_cooling_tech("technology", cooling_techs, cooling_techs_years) %>%
+      group_by(scenario, watcategory, technology, year) %>%
+      summarise(value = sum(value)) %>% ungroup() %>% 
+      select(scenario, source = watcategory, target = technology, year, value)
+    , 
+    # everything else on sector level 
+    waterWithdrawalsByTech_watCat %>% 
+      filter(watcategory != "water_td_elec_W") %>% 
+      group_by(scenario, watcategory, sector, year) %>%
+      summarise(value = sum(value)) %>% ungroup() %>%
+      select(scenario, source = watcategory, target = sector, year, value)
+  )
 
-
-waterWithdrawalsByStateSectorBasin_source %>% 
-  group_by(scenario, subresource, target, year) %>% 
-  summarise(value = sum(source_disagg)) %>% ungroup() %>% 
-  select(scenario, source = subresource, target, year, value) %>% 
-  rbind(desal_totalUSA, tech) %>% 
-  rename_water_use_categories() %>% 
-  plot_sankey("Water Use by Source, Category, and Technology")
-
+plot_sankey(rbind(waterSourceUseCategories, waterCateogryTech), "Water Source, Use Category, and End-Use")
 ```
+
 
 ```{r fig.width=10, warning=FALSE}
-subsector <- waterWithdrawalsByTech_watCat %>% 
-  # filter(sector == "electricity") %>% 
-  group_by(scenario, watcategory, subsector, year) %>%
-  # clean_cooling_tech("technology", cooling_techs, cooling_techs_years) %>% 
-  summarise(value = sum(value)) %>% ungroup() %>%
-  select(scenario, source = watcategory, target = subsector, year, value)
-
-
-waterWithdrawalsByStateSectorBasin_source %>% 
-  group_by(scenario, subresource, target, year) %>% 
-  summarise(value = sum(source_disagg)) %>% ungroup() %>% 
-  select(scenario, source = subresource, target, year, value) %>% 
-  rbind(desal_totalUSA, subsector) %>% 
-  rename_water_use_categories() %>% 
-  plot_sankey("Water Use by Source, Category, and Subsector")
-
+# water source, basin, use category, and end-use
+plot_sankey(rbind(df_waterWithdrawalsByWaterSource, df_waterWithdrawalsByStateSectorBasin, waterCateogryTech, hydro_water_req), "Water Source, Basin, Use Category, and End-Use")
 ```
+
 
 ```{r fig.width=10, warning=FALSE}
-sector <- waterWithdrawalsByTech_watCat %>% 
-  # filter(sector == "electricity") %>% 
-  group_by(scenario, watcategory, sector, year) %>%
-  # clean_cooling_tech("technology", cooling_techs, cooling_techs_years) %>% 
-  summarise(value = sum(value)) %>% ungroup() %>%
-  select(scenario, source = watcategory, target = sector, year, value)
+# SWAPPED basins: water source, basin, use category, and end-use
+water_source_target <- rbind(df_waterWithdrawalsByWaterSource %>% swap_source_target(), 
+                  waterSourceUseCategories,
+                  waterCateogryTech, hydro_water_req) %>% 
+  complete(scenario, year, nesting(source, target), fill = list(value = 0)) %>% mutate(units = "km3") %>% 
+  select(scenario, source, target, year, value, units)
 
+plot_sankey(water_source_target, "Water Source, Basin, Use Category, and End-Use")
 
-waterWithdrawalsByStateSectorBasin_source %>% 
-  group_by(scenario, subresource, target, year) %>% 
-  summarise(value = sum(source_disagg)) %>% ungroup() %>% 
-  select(scenario, source = subresource, target, year, value) %>% 
-  rbind(desal_totalUSA, sector) %>% 
-  rename_water_use_categories() %>% 
-  plot_sankey("Water Use by Source, Category, and Sector")
-
-
+write_csv(water_source_target , paste0("../", data_dir, "water_source_target.csv"))
 ```
+
+
+
 
 ```{r fig.width=10, warning=FALSE}
-elec_technology <- waterWithdrawalsByTech_watCat %>% 
-  filter(sector == "electricity") %>%
-  group_by(scenario, watcategory, technology, year) %>%
-  # clean_cooling_tech("technology", cooling_techs, cooling_techs_years) %>% 
-  summarise(value = sum(value)) %>% ungroup() %>%
-  select(scenario, source = watcategory, target = technology, year, value)
+# water source, basin, use category, and end-use WITH BETTER COLORS 
+
+waterSourceBasinsCategoriesUse_colors <- read_csv(paste0("../", data_dir, "waterSourceBasinsCategoriesUse.csv"))
+
+plot_sankey(waterSourceBasinsCategoriesUse_colors, "Water Source, Basin, Use Category, and End-Use")
+```
 
 
-waterWithdrawalsByStateSectorBasin_source %>% 
-  group_by(scenario, subresource, target, year) %>% 
-  summarise(value = sum(source_disagg)) %>% ungroup() %>% 
-  select(scenario, source = subresource, target, year, value) %>% 
-  rbind(desal_totalUSA, elec_technology) %>% 
-  rename_water_use_categories() %>% 
-  plot_sankey("Water Use by Source, Category, and Sector")
+```{r fig.width=10, warning=FALSE}
+# Combine source and target to get unique nodes and their colors
+nodes <- waterSourceBasinsCategoriesUse_colors %>%
+  select(source, source_color) %>%
+  rename(node = source, node_color = source_color) %>%
+  bind_rows(
+    waterSourceBasinsCategoriesUse_colors %>%
+      select(target, target_color) %>%
+      rename(node = target, node_color = target_color)
+  ) %>%
+  distinct()
+
+# Add color directly to node labels
+node_labels <- unique(c(waterSourceBasinsCategoriesUse_colors$source, 
+                        waterSourceBasinsCategoriesUse_colors$target))
+
+# Map node colors to node labels
+node_colors <- nodes$node_color[match(node_labels, nodes$node)]
+```
+
+
+```{r fig.width=10, warning=FALSE}
+unique(waterSourceBasinsCategoriesUse_colors[c("source", "source_color")])$source_color[match(node_labels, unique(waterSourceBasinsCategoriesUse_colors$source))]
 
 
 ```
@@ -518,9 +537,7 @@ waterWithdrawalsByStateSectorBasin_source %>%
 
 
 
-
-
-### Energy Sankey
+## Energy Sankey
 
 Overall information required:
 
@@ -627,15 +644,21 @@ elec_source_target <- rbind(
     summarise(value = sum(value)) %>% ungroup() %>%
     select(scenario, source = input, target = sector, year, value)
 ) %>% filter(source != target)
+```
 
+
+```{r fig.width=10, warning=FALSE}
 plot_sankey(elec_source_target, "Electricity Generation and Consumption")
+```
 
+
+```{r fig.width=10, warning=FALSE}
 # remove water from electricity diagram 
 plot_sankey(elec_source_target %>% filter(source != "water_td_elec_W"), yr = 2050, "Electricity Generation and Consumption")
 ```
 
 
-### Energy-Water Sankey
+## Energy-Water Sankey
 
 -   water inputs to electricity generation
 
