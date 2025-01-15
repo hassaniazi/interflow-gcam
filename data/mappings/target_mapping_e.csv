@@ -1,0 +1,105 @@
+sector,Target
+biomass,Biomass
+delivered biomass,Biomass
+regional biomass,Biomass
+regional biomassOil,Biomass
+regional corn for ethanol,Biomass
+regional oilcrop,Biomass
+total biomass,Biomass
+CO2 removal,CO2_removal
+process heat dac,CO2_removal
+delivered coal,Coal
+regional coal,Coal
+comm cooking,Commercial
+comm cooling,Commercial
+comm heating,Commercial
+comm hot water,Commercial
+comm lighting,Commercial
+comm non-building,Commercial
+comm office,Commercial
+comm other,Commercial
+comm refrigeration,Commercial
+comm ventilation,Commercial
+backup_electricity,Electricity
+base load generation,Electricity
+csp_backup,Electricity
+elect_td_bld,Electricity
+elect_td_ind,Electricity
+elect_td_trn,Electricity
+electricity,Electricity
+electricity trade,Electricity
+electricity_net_ownuse,Electricity
+intermediate electricity,Electricity
+intermediate generation,Electricity
+off peak electricity,Electricity
+peak electricity,Electricity
+peak generation,Electricity
+subpeak electricity,Electricity
+subpeak generation,Electricity
+delivered gas,Gas
+gas pipeline,Gas
+gas processing,Gas
+wholesale gas,Gas
+H2 central production,Hydrogen
+H2 forecourt production,Hydrogen
+H2 distribution,Hydrogen
+H2 industrial,Hydrogen
+H2 liquid truck,Hydrogen
+H2 MHDV,Hydrogen
+H2 pipeline,Hydrogen
+LH2,Hydrogen
+H2 enduse,Hydrogen
+industry,Industry
+industrial energy use,Industry
+industrial feedstocks,Industry
+industrial processes,Industry
+ammonia,Industry
+cement,Industry
+iron and steel,Industry
+N fertilizer,Industry
+other industrial energy use,Industry
+other industrial feedstocks,Industry
+other industry,Industry
+process heat cement,Industry
+biomass liquids,Liquid Fuels
+coal to liquids,Liquid Fuels
+gas to liquids,Liquid Fuels
+oil refining,Liquid Fuels
+refined liquids enduse,Liquid Fuels
+refined liquids industrial,Liquid Fuels
+refining,Liquid Fuels
+regional natural gas,Natural Gas
+regional oil,Oil
+resid clothes dryers,Residential
+resid clothes washers,Residential
+resid computers,Residential
+resid cooking,Residential
+resid cooling,Residential
+resid dishwashers,Residential
+resid freezers,Residential
+resid furnace fans,Residential
+resid heating,Residential
+resid hot water,Residential
+resid lighting,Residential
+resid other,Residential
+resid refrigerators,Residential
+resid televisions,Residential
+trn_aviation_intl,Transportation-NonVehicle
+trn_freight,Transportation-NonVehicle
+trn_pass,Transportation-NonVehicle
+trn_shipping_intl,Transportation-NonVehicle
+trn_freight_road,Transportation-Vehicle
+trn_pass_road,Transportation-Vehicle
+trn_pass_road_LDV,Transportation-Vehicle
+trn_pass_road_LDV_4W,Transportation-Vehicle
+traded Afr_MidE pipeline gas,
+traded biomass,
+traded coal,
+traded EUR pipeline gas,
+traded LA pipeline gas,
+traded LNG,
+traded N.Amer pipeline gas,
+traded natural gas,
+traded oil,
+traded PAC pipeline gas,
+traded RUS pipeline gas,

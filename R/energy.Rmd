@@ -47,9 +47,9 @@ listQueries(im3_energy)
 
 ```{r, warning = FALSE}
 # mappings 
-source_mapping <- read_csv(paste0("../", data_dir, "mappings/source_mapping_en.csv"))
-target_mapping <- read_csv(paste0("../", data_dir, "mappings/target_mapping_en.csv"))
-node_mapping <- read_csv(paste0("../", data_dir, "mappings/node_mapping_en.csv")) 
+source_mapping_e <- read_csv(paste0("../", data_dir, "mappings/source_mapping_e.csv"))
+target_mapping_e <- read_csv(paste0("../", data_dir, "mappings/target_mapping_e.csv"))
+node_mapping_e <- read_csv(paste0("../", data_dir, "mappings/node_mapping_e.csv")) 
 ```
 
 
@@ -57,20 +57,20 @@ node_mapping <- read_csv(paste0("../", data_dir, "mappings/node_mapping_en.csv")
 
 ```{r, warning = FALSE}
 # get queries 
-inputByTechUSA <- getQuery(im3_energy, "USA inputs by tech") 
-outputByTechUSA <- getQuery(im3_energy, "USA outputs by tech")
+inputsByTechUSA <- getQuery(im3_energy, "USA inputs by tech") 
+outputsByTechUSA <- getQuery(im3_energy, "USA outputs by tech")
 
-inputBySubsectorNonElec <- getQuery(im3_energy, 'inputs by subsector (non-electric)')
-elecEnergyInputBySubsector <- getQuery(im3_energy, 'elec energy input by subsector') %>% filter(Units == "EJ") # in case no filtering of ELEC_RPS credits
-elecGenBySubsector <- getQuery(im3_energy, 'elec gen by subsector') %>% filter(Units == "EJ") # in case no filtering of ELEC_RPS credits
+inputBySubsectorNonElec <- getQuery(im3_energy, 'inputs by subsector (non-electric)') %>% filter_CONUSregions() 
+elecEnergyInputBySubsector <- getQuery(im3_energy, 'elec energy input by subsector') %>% filter(Units == "EJ") %>% filter_CONUSregions() # in case no filtering of ELEC_RPS credits
+elecGenBySubsector <- getQuery(im3_energy, 'elec gen by subsector') %>% filter(Units == "EJ") %>% filter_CONUSregions() # in case no filtering of ELEC_RPS credits
 natGasOutputs <- getQuery(im3_energy, 'USA regional natural gas outputs')
 
 ```
 
 ```{r, messsage = T, warning = FALSE}
 datatables_energy <- list(
-  "inputByTechUSA" = inputByTechUSA,
-  "outputByTechUSA" = outputByTechUSA,
+  "inputsByTechUSA" = inputsByTechUSA,
+  "outputsByTechUSA" = outputsByTechUSA,
   "inputBySubsectorNonElec" = inputBySubsectorNonElec,
   "elecEnergyInputBySubsector" = elecEnergyInputBySubsector,
   "elecGenBySubsector" = elecGenBySubsector,
@@ -90,19 +90,36 @@ Let's process each piece to prepare the format of: scenario, source, target, yea
 
 
 ```{r fig.width=8, warning=FALSE}
+unique((inputBySubsectorNonElec %>% remove_month_day_night_superpeak("sector"))$sector)
+unique(inputBySubsectorNonElec$subsector)
+unique((inputBySubsectorNonElec %>% remove_month_day_night_superpeak("input"))$input)
+```
+
+
+```{r fig.width=8, warning=FALSE}
 # map non electricity energy flows to major aggregated categories based on the mapping file 
 
-
 inputs_by_subsector_nonelec <- inputBySubsectorNonElec %>% 
-  filter(Units == 'EJ') %>%
-  filter(!input %in% c('regional corn', 'regional soybean')) %>% 
+  filter(Units == 'EJ') %>% # only take energy flows
+  filter(!input %in% c('regional corn', 'regional soybean')) %>% # remove crop inputs 
   # aggregate all monthly_day combinations to one category e.g., electricity domestic supply_Nov_day to electricity domestic supply
   remove_month_day_night_superpeak("sector") %>% remove_month_day_night_superpeak("input") %>%
-  left_join(source_mapping, by = 'input') %>%
-  left_join(target_mapping, by = 'sector')
+  rbind(inputsByTechUSA %>% filter(str_detect(sector, "H2 ")) %>% select(-technology)) %>% # add H3 flows from the USA region level as IM3 doesn't model H2 at state level
+  left_join(source_mapping_e, by = 'input') %>%
+  left_join(target_mapping_e, by = 'sector')
 
 # Note there are NAs in the output due to missing mappings or sectors that are
 # not supposed to be targets and inputs that are not supposed# to be sources
+```
+
+
+```{r fig.width=8, warning=FALSE}
+# get hydrogen flows from USA region since IM3 version doesn't model H2 at state level 
+inputsByTechUSA %>%# filter all inputs that have "H2 " in it
+  filter(str_detect(sector, "H2")) %>%
+  select(sector) %>% unique()
+
+
 ```
 
 
@@ -142,11 +159,11 @@ unique((inputs_by_subsector_nonelec %>% filter(is.na(Target)))$input)
 inputs_by_subsector_nonelec_unmatched_source <- inputs_by_subsector_nonelec %>% 
   filter(is.na(Source)) %>% 
   select(scenario, sector, subsector, input, Source, Target) %>% 
-  unique
+  unique()
 
 unique(inputs_by_subsector_nonelec_unmatched_source$input)
 
-unmatched_sources <- c("electricity domestic supply", "oil-credits","renewable", "process heat cement","process heat dac")
+unmatched_sources <- c("oil-credits", "renewable", "regional oilcrop", "process heat cement", "process heat dac")
 
 if(! all(inputs_by_subsector_nonelec_unmatched_source$input %in% unmatched_sources )){
   unmatched <- setdiff(inputs_by_subsector_nonelec_unmatched_source$input, unmatched_sources)
@@ -180,18 +197,18 @@ if(! all(inputs_by_subsector_nonelec_unmatched_target$sector %in% unmatched_targ
 Get other flows such as gas processing and backup electricity
 
 ```{r fig.width=8, warning=FALSE}
-gas_processing_flows <- inputByTechUSA %>%
+gas_processing_flows <- inputsByTechUSA %>%
   filter(sector == "gas processing") %>%
-  left_join(source_mapping, by = "input") %>%
-  left_join(target_mapping, by = "sector") %>%
+  left_join(source_mapping_e, by = "input") %>%
+  left_join(target_mapping_e, by = "sector") %>%
   group_by(scenario, Units, year, Source, Target) %>%
   summarize(value = sum(value)) %>%
   ungroup()
 
-backup <- inputByTechUSA %>%
+backup <- inputsByTechUSA %>%
   filter(sector %in% c("backup_electricity", "csp_backup")) %>%
-  left_join(source_mapping, by = "input") %>%
-  left_join(target_mapping, by = "sector") %>%
+  left_join(source_mapping_e, by = "input") %>%
+  left_join(target_mapping_e, by = "sector") %>%
   group_by(scenario, Units, year, Source, Target) %>%
   summarize(value = sum(value)) %>%
   ungroup()
@@ -204,23 +221,23 @@ elec_energy_by_subsector <- elecEnergyInputBySubsector %>%
   filter(Units == 'EJ') %>%
   filter(!input %in% c('backup_electricity', 'csp_backup'),
          !subsector %in% c("nuclear", "geothermal")) %>% #don't want to double count electricity from backup, and nuclear and geothermal are reported from output
-  left_join(target_mapping, by = 'sector') %>% 
-  left_join(source_mapping, by = 'input') 
+  left_join(target_mapping_e, by = 'sector') %>% 
+  left_join(source_mapping_e, by = 'input') 
 
 #hydropower is only available as an output. In the "direct equivalent" reporting convention used here, input = output
-hydro_power <- elecEnergyInputBySubsector %>%
+hydro_power <- elecGenBySubsector %>%
   filter(subsector == 'hydro') %>%
   mutate(Source = 'Hydropower',
          Target = 'Electricity')
 
 # nuclear's reported thermal inputs assume a 3:1 conversion, so for "direct equivalent" reporting we use the output
-nuclear <- elecEnergyInputBySubsector %>%
+nuclear <- elecGenBySubsector %>%
   filter(subsector == 'nuclear') %>%
   mutate(Source = 'Nuclear',
          Target = 'Electricity') 
 
 # geothermal's reported thermal inputs assume a 10:1 conversion, so for "direct equivalent" reporting we use the output
-geothermal <- elecEnergyInputBySubsector %>%
+geothermal <- elecGenBySubsector %>%
   filter(subsector == 'geothermal') %>%
   mutate(Source = 'Geothermal',
          Target = 'Electricity')
@@ -247,6 +264,47 @@ Source_Target_all <- all_energy %>%
 datatable(Source_Target_all, filter = 'top', rownames = FALSE)
 ```
 
+
+```{r fig.width=8, warning=FALSE}
+# calculate losses 
+# take the different of the sum of sources of a node and the sum of targets of a node and assign it to Losses target node. The Source would be the node it self. 
+
+losses <- Source_Target_all %>%
+  # cather data to have one column for "direction" (Source/Target) and one for "node"
+  pivot_longer(cols = c(Source, Target), 
+               names_to = "direction", 
+               values_to = "node") %>%
+  # only calculate for mid-tier/transformation flows
+  left_join(node_mapping_e %>% filter(stage == "mid") %>% select("node" = "label", stage), by = "node" ) %>%
+  filter(!is.na(stage)) %>%
+  group_by(scenario, year, Units, node, direction) %>%
+  summarize(total_value = sum(value), .groups = "drop") %>%
+  pivot_wider(names_from = direction, values_from = total_value, values_fill = 0) %>%
+  mutate(losses = Target - Source) %>%
+  # filter(losses > 0) %>%
+  # create the "Losses" rows with losses as target and the node as Source
+  mutate(Source = node, Target = "Losses", value = losses) %>%
+  select(scenario, Units, Source, Target, year, value) 
+
+# add the losses back to the original dataset
+Source_Target_all %>% bind_rows(losses) -> Source_Target_all_losses
+```
+
+
+```{r fig.width=8, warning=FALSE}
+# energy losses plot 
+if (F) {
+  losses %>% 
+  ggplot(aes(x = year, y = value, color = Source, linetype = Source)) +
+  geom_line(size = 1) +
+  scale_color_manual(values = node_mapping_e %>% filter(stage == "mid") %>% pull(hex)) +
+  facet_wrap(~scenario, nrow = 2) +
+  labs(title = "Energy Efficiency Losses: IM3 scenarios", x = "Year", y = "Losses (EJ)") +
+  theme_bw() 
+}
+
+```
+
 #### Plotting 
 
 ```{r fig.width=8, warning=FALSE}
@@ -261,32 +319,33 @@ link_alpha <- .5
 
 # source/target mapping
 
-node_mapping_in <- node_mapping
+node_mapping_in <- node_mapping_e
 
 # GCAM data
-gcam_data <- Source_Target_all %>% 
+gcam_data <- Source_Target_all_losses %>% 
   filter(scenario == scenario_name) %>% filter( year == select_year) %>% select(-scenario)
 
-all_links <- c(gcam_data$Source, gcam_data$Target) %>% unique
+all_links <- c(gcam_data$Source, gcam_data$Target) %>% unique()
 
-node_mapping <- node_mapping_in %>% filter(label %in% all_links)
+node_mapping_e <- node_mapping_in %>% filter(label %in% all_links)
 
-node_mapping$node <- 0:(nrow(node_mapping)-1)
+node_mapping_e$node <- 0:(nrow(node_mapping_e)-1)
 
 # process node data
 links_data <- gcam_data %>% 
+  # filter(Source %in% c("Hydropower", "Solar")) %>% 
   select(Source, Target, value) %>% 
-  mutate(Target = ifelse(str_detect(Target, 'Ind'), 'Industry', Target)) %>% 
+  # mutate(Target = ifelse(str_detect(Target, 'Ind'), 'Industry', Target)) %>% 
   group_by(Source, Target) %>% 
   summarize(value = sum(value)) %>% 
   ungroup() %>% 
   rename(Source_label = Source,
          Target_label = Target) %>% 
-  left_join(node_mapping %>% select(label, node), by = c('Source_label' = 'label')) %>% 
+  left_join(node_mapping_e %>% select(label, node), by = c('Source_label' = 'label')) %>% 
   rename(Source_node = node) %>% 
-  left_join(node_mapping %>% select(label, node), by = c('Target_label' = 'label')) %>% 
+  left_join(node_mapping_e %>% select(label, node), by = c('Target_label' = 'label')) %>% 
   rename(Target_node = node) %>% 
-  left_join(node_mapping %>% select(label, stage, hex, color_name), by = c('Source_label' = 'label')) %>% 
+  left_join(node_mapping_e %>% select(label, stage, hex, color_name), by = c('Source_label' = 'label')) %>% 
   mutate(rgb = apply(FUN = paste, MARGIN = 2, X = col2rgb(hex), collapse = ',')) %>% 
   mutate(rgba = paste0('rgba(', rgb, ', ', link_alpha,')')) %>% 
   mutate(link_label = paste(Source_label, round(value, digits = 1),'EJ')) %>% 
@@ -303,7 +362,7 @@ datatable(links_data, filter = 'top', rownames = FALSE, options = list(pageLengt
 # source
 source_sum <- links_data %>% 
   select(Source_label, value) %>% 
-  left_join(node_mapping %>% select(label, stage), by = c('Source_label' = 'label')) %>% 
+  left_join(node_mapping_e %>% select(label, stage), by = c('Source_label' = 'label')) %>% 
   rename(label=Source_label) %>% 
   filter(tolower(stage) == 'source') %>% 
   group_by(label, stage) %>% 
@@ -314,7 +373,7 @@ source_total <- source_sum %>%
 
 source_percent <- source_sum %>% 
   mutate(percent = node_sum/source_total*100) %>% 
-  left_join(node_mapping) %>% 
+  left_join(node_mapping_e) %>% 
   arrange(node) %>% 
   mutate(x = .01) %>% 
   mutate(csum_norm = source_total)
@@ -324,7 +383,7 @@ source_percent$start <- lag(source_percent$csum)
 # target
 target_sum <- links_data %>% 
   select(Target_label, value) %>% 
-  left_join(node_mapping %>% select(label, stage), by = c('Target_label' = 'label')) %>% 
+  left_join(node_mapping_e %>% select(label, stage), by = c('Target_label' = 'label')) %>% 
   rename(label=Target_label) %>% 
   filter(stage == 'target') %>% 
   group_by(label, stage) %>% 
@@ -335,7 +394,7 @@ target_total <- target_sum %>%
 
 target_percent <- target_sum %>% 
   mutate(percent = node_sum/target_total*100) %>% 
-  left_join(node_mapping) %>% 
+  left_join(node_mapping_e) %>% 
   arrange(node) %>% 
   mutate(x = .95) %>% 
   mutate(csum_norm = target_total)
@@ -343,24 +402,24 @@ target_percent$csum <- cumsum(target_percent$node_sum)
 target_percent$start <- lag(target_percent$csum)
 
 # Intermediate Carriers Flows in
-intermediate_nodes <- node_mapping %>% filter(stage == 'mid') %>% pull(label)
+intermediate_nodes <- node_mapping_e %>% filter(stage == 'mid') %>% pull(label)
  intermediate_flows_in_total <- links_data %>%
    filter(Target_label %in% intermediate_nodes) %>% 
    group_by(Target_label) %>% 
    summarize(node_sum = sum(value))
  
- intermediate_percent <- intermediate_flows_in_total %>% 
-   rename(label = Target_label) %>% 
-   mutate(stage = 'mid') %>% 
-   mutate(percent =node_sum/source_total*100) %>% 
-   left_join(node_mapping)
- 
- intermediate_total <- intermediate_percent %>% pull(node_sum) %>% sum
- 
-  intermediate_flows_out_total <- links_data %>%
-   filter(Source_label %in% intermediate_nodes) %>% 
-   group_by(Source_label) %>% 
-   summarize(value = sum(value))
+intermediate_percent <- intermediate_flows_in_total %>% 
+ rename(label = Target_label) %>% 
+ mutate(stage = 'mid') %>% 
+ mutate(percent =node_sum/source_total*100) %>% 
+ left_join(node_mapping_e)
+
+intermediate_total <- intermediate_percent %>% pull(node_sum) %>% sum
+
+intermediate_flows_out_total <- links_data %>%
+ filter(Source_label %in% intermediate_nodes) %>% 
+ group_by(Source_label) %>% 
+ summarize(value = sum(value))
   
 ```
 
@@ -370,18 +429,18 @@ intermediate_nodes <- node_mapping %>% filter(stage == 'mid') %>% pull(label)
 
 # final node info
 nodes_data <- bind_rows(source_percent, intermediate_percent, target_percent) %>%
-  arrange(node)%>%
+  arrange(node) %>%
   replace_na(list(start = 0)) %>% 
   mutate(mid_point = (start+csum)/2) %>% 
   mutate(y = mid_point/csum_norm) %>% 
-  mutate(y = ifelse(label == 'Gas', 0.3,
+  mutate(y = ifelse(label == 'Gas', 0.5,
                     ifelse(label == 'Liquid Fuels', 0.2,
                     ifelse(label == 'Electricity', 0.6,
                     ifelse(label == 'Hydrogen',0.9,y))))) %>% 
-  mutate(x = ifelse(label == 'Gas', 0.35,
-                    ifelse(label == 'Liquid Fuels', 0.5,
+  mutate(x = ifelse(label == 'Gas', 0.25,
+                    ifelse(label == 'Liquid Fuels', 0.4,
                            ifelse(label == 'Electricity', 0.6,
-                                  ifelse(label == 'Hydrogen',0.7,x))))) %>%
+                                  ifelse(label == 'Hydrogen', 0.7,x))))) %>%
   mutate(node_label = ifelse(is.na(node_sum), label, 
                                paste0(label, ' ',round(node_sum, digits = 1) , gcam_data_unit, 
                                       ' ', round(percent, digits = 1),'%'))) 
@@ -389,8 +448,8 @@ nodes_data <- bind_rows(source_percent, intermediate_percent, target_percent) %>
 
 # Check that Source and Targets in Links are in the node mapping
 
-  if( any(is.na(links_data$Source_node)) ) stop("Check Source number mapping - NA's")
-  if( any(is.na(links_data$Target_node)) ) stop("Check Target number mapping - NA's")
+if( any(is.na(links_data$Source_node)) ) stop("Check Source number mapping - NA's")
+if( any(is.na(links_data$Target_node)) ) stop("Check Target number mapping - NA's")
   
 datatable(nodes_data, filter = 'top', rownames = FALSE, options = list(pageLength = 20, scrollX = TRUE))
 ```
@@ -398,14 +457,14 @@ datatable(nodes_data, filter = 'top', rownames = FALSE, options = list(pageLengt
 
 ```{r fig.width=8, warning=FALSE}
 # save files for Kendall
-write_csv(Source_Target_all, paste0("../", data_dir, 'allenergy_source_target.csv'))
+write_csv(Source_Target_all_losses, paste0("../", data_dir, 'allenergy_source_target.csv'))
 write_csv(nodes_data, paste0("../", data_dir, 'allenergy_nodes_data.csv'))
 write_csv(links_data, paste0("../", data_dir, 'allenergy_links_data.csv'))
 
 ```
 
 
-```{r fig.width=10, warning=FALSE}
+```{r fig.width=8, warning=FALSE}
 # plot sankey
 sankey_figure <- plot_ly( 
       type = "sankey",
