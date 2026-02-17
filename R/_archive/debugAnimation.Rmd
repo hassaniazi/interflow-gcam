@@ -1,0 +1,337 @@
+---
+title: "Debug animation"
+output: html_notebook
+---
+
+To debug animation and figure out what's going on with the node labeling and matching of source and target with that labeling. 
+
+Load important stuff 
+```{r, warning=FALSE}
+setwd("../")
+source("./R/functions.R")
+```
+
+Let's start with a working example.
+```{r}
+# random data 
+S.links <- data.frame(source = c(0,1,0,2,3,3, 0,1,0,2,3,3),
+                      target = c(2,3,3,4,4,5, 2,3,3,4,4,5),
+                      value =  c(8,4,2,8,4,2, 16,4,2,16,4,2),
+                      year = c("2001","2001","2001","2001","2001","2001","2002","2002","2002","2002","2002","2002"))
+S.links
+```
+
+
+```{r fig.width=8, warning=FALSE}
+# plot. Hit play to see the animation
+plot_ly(
+  type = "sankey",
+  orientation = "h",
+
+  node = list(
+    label = c("A1", "A2", "B1", "B2", "C1", "C2"),
+    color = c("blue", "blue", "blue", "blue", "blue", "blue"),
+    pad = 15,
+    thickness = 20,
+    line = list(
+      color = "black",
+      width = 0.5
+    )
+  ),
+
+  link = S.links,
+  frame = ~S.links$year
+)
+```
+
+
+
+```{r fig.width=8, warning=FALSE}
+# plotting function (also in functions.R)
+
+plot_sankey_to_test_animation <- function(df_sankey, title = "GCAM-USA Sankey Diagram", scen = "rcp45cooler_ssp3", yr = 2050, animate = T){
+
+  df_sankey <- as.data.frame(df_sankey)
+
+  # filter data if scenario column exists
+  if ("scenario" %in% colnames(df_sankey)) {
+    df_sankey <- df_sankey %>% filter(scenario == scen)
+  }
+
+  if (animate == F) {
+    df_sankey <- df_sankey %>% filter(year == yr)
+  }
+  
+  # figure metadata
+  node_labels <- unique(c(as.character(df_sankey$source), as.character(df_sankey$target)))
+
+  # create a sankey diagram for GCAM-USA using plotly
+  p <- plot_ly(
+    data = df_sankey,
+    type = "sankey",
+    arrangement = "freeform",
+    node = list(
+      # group = 2,
+      # pad = 15,
+      # thickness = 20,
+      label = node_labels
+    ),
+    link = list(
+      source = match(df_sankey$source, node_labels) - 1,
+      target = match(df_sankey$target, node_labels) - 1,
+      value = df_sankey$value
+      # year = df_sankey$year
+    ),
+    frame = ~df_sankey$year
+  ) %>%
+    layout(
+      title = paste0(title, " for ", scen, " scenario in ", yr),
+      font = list(size = 11)
+    )
+
+  if (animate == T) {
+    p <- p %>% animation_opts(
+      1000, easing = "elastic", redraw = T
+    ) %>%
+    animation_slider(
+      currentvalue = list(prefix = "Year ", font = list(color="red"))
+    )
+  }
+
+  return(p)
+}
+
+```
+
+```{r fig.width=8, warning=FALSE}
+# test the function with example data 
+plot_sankey_to_test_animation(S.links, title = "Test Sankey Diagram", scen = "rcp45cooler_ssp3", animate = T)
+```
+So this one works correctly, meaning the function is behaving as expected.
+
+```{r}
+# read in the data to test animation: elec source target for now 
+elec_source_target_to_test_animation <- read.csv(paste0("../data/elec_source_target_to_test_animation.csv"))
+datatable(elec_source_target_to_test_animation)
+```
+
+```{r fig.width=8, warning=FALSE}
+# test the function with real data
+plot_sankey_to_test_animation(elec_source_target_to_test_animation, title = "GCAM-USA Sankey Diagram", scen = "rcp45cooler_ssp3", yr = 2050, animate = T)
+```
+
+This one dances around. Let's produce some diagnostics. 
+
+```{r}
+# the same code as the function but outside the function to test. (avoid tons of print statements) 
+df_sankey_test <- elec_source_target_to_test_animation
+
+# only changes the data type 
+df_sankey_test <- as.data.frame(df_sankey_test)
+
+# filter data if scenario column exists
+scen = "rcp45cooler_ssp3"
+yr = 2050
+df_sankey_filt <- df_sankey_test %>% filter(scenario == scen) %>% filter(year == yr)
+
+df_sankey_filt
+```
+
+Generate figure metadata. Some of the steps in the function are only to follow good practices and are not necessary. But we will do them anyway. 
+
+```{r}
+# create node labels 
+# for filtered data 
+node_labels_filt <- unique(c(as.character(df_sankey_filt$source), as.character(df_sankey_filt$target)))
+node_labels_filt
+```
+
+
+```{r}
+# for complete data 
+node_labels_test <- unique(c(as.character(df_sankey_test$source), as.character(df_sankey_test$target)))
+node_labels_test
+```
+
+I think the problem is with the `match` step. Another important thing to note that different data can be passed at different stages e.g., `df_sankey_test` for frame (which is basically the animation workhorse) vs df_sankey_filt to source and target matching. 
+
+```{r fig.width=8, warning=F}
+# create a sankey diagram 
+title = "test diagram"
+test_sankey <- plot_ly(
+    data = df_sankey_test,
+    type = "sankey",
+    arrangement = "freeform",
+    node = list(
+      # group = 2,
+      # pad = 15,
+      # thickness = 20,
+      label = node_labels_test
+    ),
+    link = list(
+      source = match(df_sankey_filt$source, node_labels_test) - 1,
+      target = match(df_sankey_filt$target, node_labels_test) - 1,
+      value = df_sankey_test$value,
+      year = df_sankey_test$year
+    ),
+    frame = ~df_sankey_test$year
+  ) %>%
+    layout(
+      title = paste0(title, " for ", scen, " scenario in ", yr),
+      font = list(size = 11)
+    ) %>% animation_opts(
+  1000, easing = "elastic", redraw = T
+) %>%
+animation_slider(
+  currentvalue = list(prefix = "Year ", font = list(color="red"))
+)
+test_sankey
+```
+
+```{r}
+match(df_sankey_filt$source, node_labels_test) - 1
+match(df_sankey_filt$target, node_labels_test) - 1
+```
+
+```{r}
+match(df_sankey_filt$source, node_labels_filt) - 1
+match(df_sankey_filt$target, node_labels_filt) - 1
+```
+Sources and targets seem to have reasonable matches. 
+
+But if we use full unfiltered data, the figure dances around becasue the source and targets have multiple matches. 
+
+```{r fig.width=8, warning=F}
+plot_ly(
+    data = df_sankey_test,
+    type = "sankey",
+    arrangement = "freeform",
+    node = list(
+      # group = 2,
+      # pad = 15,
+      # thickness = 20,
+      label = node_labels_test
+    ),
+    link = list(
+      source = match(df_sankey_test$source, node_labels_test) - 1,
+      target = match(df_sankey_test$target, node_labels_test) - 1,
+      value = df_sankey_test$value,
+      year = df_sankey_test$year
+    ),
+    frame = ~df_sankey_test$year
+  ) %>%
+    layout(
+      title = paste0(title, " for ", scen, " scenario in ", yr),
+      font = list(size = 11)
+    ) %>% animation_opts(
+  1000, easing = "elastic", redraw = T
+) %>%
+animation_slider(
+  currentvalue = list(prefix = "Year ", font = list(color="red"))
+)
+```
+
+
+```{r}
+match(df_sankey_test$source, node_labels_test) - 1
+match(df_sankey_test$target, node_labels_test) - 1
+```
+
+
+
+```{r}
+# check if df_sankey_test is complete i.e., same source and target across scenario and year
+
+# Get all unique sources and targets
+all_sources <- unique(df_sankey_test$source)
+all_targets <- unique(df_sankey_test$target)
+
+# Check for completeness and capture missing sources and targets as lists
+incomplete_groups <- df_sankey_test %>%
+  group_by(scenario, year) %>%
+  summarize(
+    missing_sources = list(setdiff(all_sources, source)),
+    missing_targets = list(setdiff(all_targets, target)),
+    .groups = "drop"
+  ) %>%
+  filter(lengths(missing_sources) > 0 | lengths(missing_targets) > 0)
+
+# Display results
+if (nrow(incomplete_groups) == 0) {
+  print("All source-target pairs are present across each scenario and year.")
+} else {
+  print("Some source-target pairs are missing in the following groups:")
+  incomplete_groups %>%
+    rowwise() %>%
+    mutate(missing_info = paste0(
+      "Scenario: ", scenario,
+      ", Year: ", year,
+      "\n  Missing Sources: ", paste(unlist(missing_sources), collapse = ", "),
+      "\n  Missing Targets: ", paste(unlist(missing_targets), collapse = ", ")
+    )) %>%
+    pull(missing_info) %>%
+    cat(sep = "\n\n")
+}
+```
+
+Observations: the node labels NEED to be from the complete data i.e., all scenarios and years. Only this way we will be able to "set the canvas". This will be particularly useful for more advanced animations e.g., where we want to fix the max across scenario-years and plot each year within it. 
+
+Try completing the data before plotting 
+
+```{r warning=F}
+# complete the dataframe before plotting
+source_target_pairs <- df_sankey_test %>%
+  select(source, target) %>%
+  distinct() 
+
+df_sankey_test_complete <- df_sankey_test %>%
+  complete(scenario, year, nesting(source, target), fill = list(value = 0))
+```
+
+
+```{r fig.width=8, warning=F}
+df_sankey_test_complete_plot <- df_sankey_test_complete %>%filter(year > 2015) %>% filter(scenario == "rcp45cooler_ssp3")
+
+plot_ly(
+    data = df_sankey_test_complete_plot,
+    type = "sankey",
+    arrangement = "freeform",
+    node = list(
+      group = 2,
+      pad = 15,
+      thickness = 20,
+      label = node_labels_test
+    ),
+    link = list(
+      source = match(df_sankey_test_complete_plot$source, node_labels_test) - 1,
+      target = match(df_sankey_test_complete_plot$target, node_labels_test) - 1,
+      value = df_sankey_test_complete_plot$value,
+      year = df_sankey_test_complete_plot$year
+    ),
+    frame = ~df_sankey_test_complete_plot$year
+  ) %>%
+    layout(
+      title = paste0(title, " for ", scen, " scenario in ", yr),
+      font = list(size = 11)
+    ) %>% animation_opts(
+  2000, easing = "elastic", redraw = T
+) %>%
+animation_slider(
+  currentvalue = list(prefix = "Year ", font = list(color="red"))
+)
+
+
+
+```
+
+
+```{r fig.width=8, warning=F}
+plot_sankey(df_sankey_test_complete, animate = T)
+```
+
+```{r fig.width=8, warning=F}
+plot_sankey(df_sankey_test_complete %>% filter(year > 2015), animate = T)
+```
+
+Try generating frames before plotting 
+
