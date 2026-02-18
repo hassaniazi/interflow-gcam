@@ -8,28 +8,28 @@ water_td_elec_W,Electricity Water Use
 water_td_ind_W,Industry Water Use
 water_td_irr_W,Irrigation Water Use
 water_td_pri_W,Mining Water Use
-Beef,Livestock
+Beef,Beef
 Dairy,Livestock
 Pork,Livestock
 Poultry,Livestock
 SheepGoat,Livestock
 municipal water,Residential
-biomass (conv CCS),Biomass
-biomass (conv),Biomass
-biomass (IGCC CCS),Biomass
-biomass (IGCC),Biomass
-coal (conv pul CCS),Coal
-coal (conv pul),Coal
-coal (IGCC CCS),Coal
-coal (IGCC),Coal
+biomass (conv CCS),Biomass Electricity Generation
+biomass (conv),Biomass Electricity Generation
+biomass (IGCC CCS),Biomass Electricity Generation
+biomass (IGCC),Biomass Electricity Generation
+coal (conv pul CCS),Coal Electricity Generation
+coal (conv pul),Coal Electricity Generation
+coal (IGCC CCS),Coal Electricity Generation
+coal (IGCC),Coal Electricity Generation
 CSP,Solar
 CSP (dry_hybrid),Solar
-gas (CC CCS),Gas
-gas (CC),Gas
-gas (CT),Gas
-gas (steam),Gas
-Gen_II_LWR,Nuclear
-Gen_III,Nuclear
+gas (CC CCS),Gas Electricity Generation
+gas (CC),Gas Electricity Generation
+gas (CT),Gas Electricity Generation
+gas (steam),Gas Electricity Generation
+Gen_II_LWR,Nuclear Electricity Generation
+Gen_III,Nuclear Electricity Generation
 geothermal,Geothermal
 hydro,Hydropower
 PV,Solar
@@ -49,8 +49,8 @@ Rice,Crops
 RootTuber,Crops
 SugarCrop,Crops
 Wheat,Crops
-nuclearFuelGenII,Nuclear
-nuclearFuelGenIII,Nuclear
+nuclearFuelGenII,Nuclear Fuels
+nuclearFuelGenIII,Nuclear Fuels
 regional coal,Coal
 regional natural gas,Natural Gas
 regional oil,Oil
