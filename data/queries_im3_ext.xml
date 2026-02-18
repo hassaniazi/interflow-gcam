@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<queries>
+ <aQuery>
+  <all-regions/>
+  <supplyDemandQuery title="Final energy by detailed end-use sector and fuel">
+   <axis1 name="sector">sector</axis1>
+   <axis2 name="Year">demand-physical[@vintage]</axis2>
+   <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector' and ((@name='building' or @name='industry' or @name='transportation') or (exists(child::keyword/@final-energy)))]//*[@type='input' and not(@name='limestone' or @name='process heat cement' or @name='industrial energy use' or @name='industrial feedstocks' or @name='renewable' or @name='oil-credits')]/demand-physical/node()</xPath>
+   <comments/>
+  </supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <region name="USA"/>
+  <region name="Alaska grid"/>
+  <region name="California grid"/>
+  <region name="Central East grid"/>
+  <region name="Central Northeast grid"/>
+  <region name="Central Northwest grid"/>
+  <region name="Central Southwest grid"/>
+  <region name="Florida grid"/>
+  <region name="Hawaii grid"/>
+  <region name="Mid-Atlantic grid"/>
+  <region name="New England grid"/>
+  <region name="New York grid"/>
+  <region name="Northwest grid"/>
+  <region name="Southeast grid"/>
+  <region name="Southwest grid"/>
+  <region name="Texas grid"/>
+  <supplyDemandQuery title="inputs by tech">
+   <axis1 name="input">input</axis1>
+   <axis2 name="Year">demand-physical[@vintage]</axis2>
+   <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector']/*[@type='subsector']/*[@type='technology']/*[@type='input']/demand-physical/node()</xPath>
+   <comments/>
+  </supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <supplyDemandQuery title="elec demand by segment (grid region)">
+    <axis1 name="sector">sector[@name]</axis1>
+    <axis2 name="Year">physical-output[@vintage]</axis2>
+    <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector' and contains(@name, 'domestic')]//*[@type='output']/physical-output/node()</xPath>
+    <comments/>
+  </supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <region name="Alaska grid"/>
+  <region name="California grid"/>
+  <region name="Central East grid"/>
+  <region name="Central Northeast grid"/>
+  <region name="Central Northwest grid"/>
+  <region name="Central Southwest grid"/>
+  <region name="Florida grid"/>
+  <region name="Hawaii grid"/>
+  <region name="Mid-Atlantic grid"/>
+  <region name="New England grid"/>
+  <region name="New York grid"/>
+  <region name="Northwest grid"/>
+  <region name="Southeast grid"/>
+  <region name="Southwest grid"/>
+  <region name="Texas grid"/>
+  <supplyDemandQuery title="elec gen by segment (grid level)">
+   <axis1 name="segment">segment-production[@segment]</axis1>
+   <axis2 name="Year">dispatch[@year]</axis2>
+   <xPath buildList="true" dataName="generation" group="false" sumAll="false">*[@type = 'sector' (:collapse:) and (@name='electricity')]/dispatch/segment-production/node()</xPath>
+   <comments/>
+  </supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <supplyDemandQuery title="water withdrawals by state, sector, basin (includes desal)">
+   <axis1 name="technology">technology</axis1>
+   <axis2 name="Year">physical-output[@vintage]</axis2>
+   <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector']/*[@type='subsector']/*[@type='technology']/*[@type='output' (:collapse:)
+                and contains(@name,'water_td') and ends-with(@name,'_W')]/physical-output/node()</xPath>
+   <comments/>
+  </supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <all-regions/>
+  <supplyDemandQuery title="elec gen by gen tech and cooling tech and vintage">
+   <axis1 name="technology">technology</axis1>
+   <axis2 name="Year">physical-output[@vintage]</axis2>
+   <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector' and (@name='electricity' or @name='elect_td_bld' or
+                  contains(@name,'elec_')) and not(contains(@name, 'water_td'))]/
+                  *[@type='subsector' and not (@name='elect_td_bld')]/
+                  *[@type='technology' and not(@name='biomass (conv)' or @name='biomass (conv CCS)' or @name='biomass (IGCC)' or @name='biomass (IGCC CCS)'
+                                   or @name='coal (conv pul)' or @name='coal (conv pul CCS)' or @name='coal (IGCC)' or @name='coal (IGCC CCS)'
+                                   or @name='gas (steam/CT)' or @name='gas (CC)' or @name='gas (CC CCS)'
+                                   or @name='refined liquids (steam/CT)' or @name='refined liquids (CC)' or @name='refined liquids (CC CCS)'
+                                   or @name='geothermal' or @name='Gen_II_LWR' or @name='Gen_III'
+                                   or @name='CSP' or @name='CSP_storage')]/
+                  *[@type='output' (:collapse:)]/physical-output/node()</xPath>
+   <comments/>
+   <labelRewriteList append-values="false">
+    <level name="sector">
+     <rewrite from="elec_gas (CC CCS)" to="electricity"/>
+     <rewrite from="elec_coal (conv pul)" to="electricity"/>
+     <rewrite from="elec_biomass (IGCC CCS)" to="electricity"/>
+     <rewrite from="elec_coal (IGCC CCS)" to="electricity"/>
+     <rewrite from="elec_gas (CC)" to="electricity"/>
+     <rewrite from="elec_coal (conv pul CCS)" to="electricity"/>
+     <rewrite from="elec_CSP" to="electricity"/>
+     <rewrite from="elec_Gen_II_LWR" to="electricity"/>
+     <rewrite from="elec_refined liquids (steam/CT)" to="electricity"/>
+     <rewrite from="elec_refined liquids (CC)" to="electricity"/>
+     <rewrite from="elec_Gen_III" to="electricity"/>
+     <rewrite from="elec_geothermal" to="electricity"/>
+     <rewrite from="elec_refined liquids (CC CCS)" to="electricity"/>
+     <rewrite from="elec_biomass (conv)" to="electricity"/>
+     <rewrite from="elec_gas (steam/CT)" to="electricity"/>
+     <rewrite from="elec_biomass (conv CCS)" to="electricity"/>
+     <rewrite from="elec_biomass (IGCC)" to="electricity"/>
+     <rewrite from="elec_coal (IGCC)" to="electricity"/>
+     <rewrite from="elec_CSP_storage" to="electricity"/>
+    </level>
+    <level name="subsector">
+     <rewrite from="biomass (IGCC CCS)" to="biomass"/>
+     <rewrite from="biomass (IGCC)" to="biomass"/>
+     <rewrite from="coal (IGCC CCS)" to="coal"/>
+     <rewrite from="CSP" to="solar"/>
+     <rewrite from="Gen_III" to="nuclear"/>
+     <rewrite from="refined liquids (CC CCS)" to="refined liquids"/>
+     <rewrite from="gas (CC)" to="gas"/>
+     <rewrite from="Gen_II_LWR" to="nuclear"/>
+     <rewrite from="coal (conv pul CCS)" to="coal"/>
+     <rewrite from="biomass (conv)" to="biomass"/>
+     <rewrite from="gas (steam/CT)" to="gas"/>
+     <rewrite from="coal (conv pul)" to="coal"/>
+     <rewrite from="gas (CC CCS)" to="gas"/>
+     <rewrite from="refined liquids (CC)" to="refined liquids"/>
+     <rewrite from="coal (IGCC)" to="coal"/>
+     <rewrite from="biomass (conv CCS)" to="biomass"/>
+     <rewrite from="CSP_storage" to="solar"/>
+     <rewrite from="refined liquids (steam/CT)" to="refined liquids"/>
+    </level>
+   </labelRewriteList>
+   <showAttribute attribute-name="year" level="technology"/>
+  </supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <marketQuery title="prices of all markets">
+   <axis1 name="market">market</axis1>
+   <axis2 name="Year">market</axis2>
+   <xPath buildList="true" dataName="price" group="false" sumAll="false">Marketplace/market[true()]/price/node()</xPath>
+   <comments/>
+  </marketQuery>
+ </aQuery>
+ <aQuery>
+  <query title="profit rate">
+    <axis1 name="LandLeaf">LandLeaf</axis1>
+    <axis2 name="Year">profit-rate[@year]</axis2>
+    <xPath buildList="true" dataName="profit-rate" group="false" sumAll="false">/LandNode[@name='root' or @type='LandNode' (:collapse:)]//profit-rate/text()</xPath>
+    <comments/>
+</query>
+ </aQuery>
+ <aQuery>
+  <supplyDemandQuery title="water withdrawals by tech">
+    <axis1 name="technology">technology</axis1>
+    <axis2 name="Year">demand-physical[@vintage]</axis2>
+    <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector' and not(contains(@name, 'water_td'))]/*[@type='subsector']/*[@type='technology']/*[@type='input' (:collapse:)
+         and contains(@name,'water_td') and ends-with(@name,'_W')]/demand-physical/node()</xPath>
+    <comments/>
+    <labelRewriteList append-values="false">
+        <level name="sector">
+            <rewrite from="elec_Gen_III" to="electricity"/>
+            <rewrite from="elec_CSP_storage" to="electricity"/>
+            <rewrite from="elec_refined liquids (steam/CT)" to="electricity"/>
+            <rewrite from="elec_geothermal" to="electricity"/>
+            <rewrite from="elec_refined liquids (CC)" to="electricity"/>
+            <rewrite from="elec_Gen_II_LWR" to="electricity"/>
+            <rewrite from="elec_gas (steam/CT)" to="electricity"/>
+            <rewrite from="elec_coal (IGCC)" to="electricity"/>
+            <rewrite from="elec_gas (CC)" to="electricity"/>
+            <rewrite from="elec_biomass (IGCC)" to="electricity"/>
+            <rewrite from="elec_coal (conv pul)" to="electricity"/>
+            <rewrite from="elec_CSP" to="electricity"/>
+            <rewrite from="elec_biomass (conv)" to="electricity"/>
+        </level>
+    </labelRewriteList>
+</supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <marketQuery title="CO2 prices">
+    <axis1 name="market">market</axis1>
+    <axis2 name="Year">market</axis2>
+    <xPath buildList="true" dataName="price" group="false" sumAll="false">Marketplace/market[true() and contains(@name,'CO2')]/price/node()</xPath>
+    <comments/>
+</marketQuery>
+ </aQuery>
+ <aQuery>
+  <supplyDemandQuery title="Total ground water available">
+    <axis1 name="grade">grade</axis1>
+    <axis2 name="Year">available</axis2>
+    <xPath buildList="true" dataName="output" group="false" sumAll="true">*[@type='resource']/*[@type='subresource' and @name='groundwater']/grade/available/node()</xPath>
+    <comments/>
+</supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <supplyDemandQuery title="Cumulative ground water used">
+    <axis1 name="subresource">subresource</axis1>
+    <axis2 name="Year">cumulative-production</axis2>
+    <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='resource']/*[@type='subresource' and @name='groundwater']/cumulative-production/node()</xPath>
+    <comments/>
+</supplyDemandQuery>
+</aQuery>
+ <aQuery>
+  <all-regions/>
+  <resourceQuery title="Water withdrawals by water source (runoff vs. groundwater)">
+   <axis1 name="subresource">subresource[@name]</axis1>
+   <axis2 name="Year">production[@year]</axis2>
+   <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type = 'resource' and contains(@name, 'water withdrawals')]//production/node()</xPath>
+   <comments/>
+  </resourceQuery>
+ </aQuery>
+ <aQuery>
+  <all-regions/>
+  <supplyDemandQuery title="ag import vs. domestic supply (Regional Armington competition)">
+    <axis1 name="input">input</axis1>
+    <axis2 name="Year">demand-physical[@vintage]</axis2>
+    <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector' and contains(@name, 'regional')]/*[@type='subsector']//*[@type='input']/demand-physical[@unit='Mt' or @unit='billion m3']/node()</xPath>
+    <comments/>
+</supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <region name="USA"/>
+  <supplyDemandQuery title="ag export to the world center (USA) (Intl. Armington competition)">
+    <axis1 name="input">input</axis1>
+    <axis2 name="Year">demand-physical[@vintage]</axis2>
+    <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector' and contains(@name, 'traded')]/*[@type='subsector']//*[@type='input']/demand-physical[@unit='Mt' or @unit='billion m3']/node()</xPath>
+    <comments/>
+</supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <all-regions/>
+  <supplyDemandQuery title="refined liquids production by tech">
+    <axis1 name="technology">technology</axis1>
+    <axis2 name="Year">physical-output[@vintage]</axis2>
+    <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector' and (@name='refining' or @name ='biomass liquids')]/*[@type='subsector']/
+               *[@type='technology']/output-primary[@type='output']/physical-output/node()</xPath>
+    <comments/>
+</supplyDemandQuery>
+ </aQuery>
+ <aQuery>
+  <supplyDemandQuery title="elec capacity by tech and vintage">
+    <axis1 name="technology">technology</axis1>
+    <axis2 name="Year">capacity[@vintage]</axis2>
+    <xPath buildList="true" dataName="capacity" group="false" sumAll="false">*[@type = 'sector' (: collapse :) and (@name='electricity')]//*[@type = 'subsector']//*[@type = 'technology']/capacity/node()</xPath>
+    <comments/>
+    <showAttribute attribute-name="year" level="technology"/>
+  </supplyDemandQuery>
+ </aQuery>
+</queries>

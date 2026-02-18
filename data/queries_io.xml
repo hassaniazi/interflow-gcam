@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<queries>
+<aQuery>
+	<marketQuery title="prices of all markets">
+		<axis1 name="market">market</axis1>
+		<axis2 name="Year">market</axis2>
+		<xPath buildList="true" dataName="price" group="false" sumAll="false">Marketplace/market[true()]/price/node()</xPath>
+		<comments/>
+	</marketQuery>	
+</aQuery>
+<aQuery>
+	<marketQuery title="supply of all markets">
+		<axis1 name="market">market</axis1>
+		<axis2 name="Year">market</axis2>
+		<xPath buildList="true" dataName="price" group="false" sumAll="false">Marketplace/market[true()]/supply/node()</xPath>
+		<comments/>
+	</marketQuery>	
+</aQuery>
+<aQuery>
+	<marketQuery title="demand of all markets">
+		<axis1 name="market">market</axis1>
+		<axis2 name="Year">market</axis2>
+		<xPath buildList="true" dataName="price" group="false" sumAll="false">Marketplace/market[true()]/demand/node()</xPath>
+		<comments/>
+	</marketQuery>
+</aQuery>
+<aQuery>
+	<supplyDemandQuery title="inputs by tech">
+		<axis1 name="input">input</axis1>
+		<axis2 name="Year">demand-physical[@vintage]</axis2>
+		<xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector']/*[@type='subsector']/*[@type='technology']/*[@type='input']/demand-physical/node()</xPath>
+		<comments/>
+	</supplyDemandQuery>	
+</aQuery>
+<aQuery>
+	<supplyDemandQuery title="outputs by tech">
+		<axis1 name="technology">technology[@name]</axis1>
+		<axis2 name="Year">physical-output[@vintage]</axis2>
+		<xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector']/*[@type='subsector']/*[@type='technology']/*[@type='output']/physical-output/node()</xPath>
+		<comments/>
+	</supplyDemandQuery>
+</aQuery>
+<aQuery>
+	<supplyDemandQuery title="input-output coefficients by tech">
+		<axis1 name="input">input</axis1>
+		<axis2 name="Year">IO-coefficient[@vintage]</axis2>
+		<xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector']/*[@type='subsector']/*[@type='technology']/*[@type='input']/IO-coefficient[@vintage=parent::*/parent::*/@year]/node()</xPath>
+		<comments/>
+	</supplyDemandQuery>
+</aQuery>
+<aQuery>
+	<supplyDemandQuery title="resource supply curves">
+		<axis1 name="grade">grade</axis1>
+		<axis2 name="Year">available</axis2>
+		<xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='resource']//grade/available/node()</xPath>
+		<comments/>
+	</supplyDemandQuery>
+</aQuery>
+<aQuery>
+	<supplyDemandQuery title="energy inputs to resource production">
+		<axis1 name="resource">resource</axis1>
+		<axis2 name="Year">demand-physical[@vintage]</axis2>
+		<xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='resource']//*[@type='input']/demand-physical/node()</xPath>
+		<comments/>
+	</supplyDemandQuery>
+</aQuery>
+<aQuery>
+	<supplyDemandQuery title="resource production">
+		<axis1 name="resource">resource</axis1>
+		<axis2 name="Year">output</axis2>
+		<xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='resource']//output/node()</xPath>
+		<comments/>
+	</supplyDemandQuery>
+</aQuery>
+</queries>

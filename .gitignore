@@ -46,3 +46,9 @@ x*.R
 # *.nb.html
 .DS_Store
 
+# remove the csv and gz files created from the .dat project.
+# don't need to track secondary product of a tracked item
+data/im3*/*
+
+# heavy file to avoid commit/push issues
+im3scen_io.dat
