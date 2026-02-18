@@ -37,3 +37,12 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# my custom ignores
+output/*
+img/
+x*.R
+# *.html
+# *.nb.html
+.DS_Store
+
