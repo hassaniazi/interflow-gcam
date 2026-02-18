@@ -1,0 +1,491 @@
+region,basin,subregion
+Africa_Eastern,Africa-Red Sea-Gulf of Aden Coast,Africa_Eastern
+Africa_Eastern,Africa-Red Sea-Gulf of Aden Coast,Africa_Northern
+Africa_Eastern,Madasgacar,Africa_Eastern
+Africa_Eastern,Nile,Africa_Eastern
+Africa_Eastern,Nile,Africa_Northern
+Africa_Eastern,Nile,Africa_Southern
+Africa_Eastern,Nile,Africa_Western
+Africa_Eastern,Rift Valley,Africa_Eastern
+Africa_Eastern,Rift Valley,Africa_Southern
+Africa_Eastern,Shebelli-Juba,Africa_Eastern
+Africa_Northern,Africa-North Interior,Africa_Eastern
+Africa_Northern,Africa-North Interior,Africa_Northern
+Africa_Northern,Africa-North Interior,Africa_Western
+Africa_Northern,Africa-North West Coast,Africa_Northern
+Africa_Northern,Africa-North West Coast,Africa_Western
+Africa_Northern,Mediterranean South Coast,Africa_Northern
+Africa_Northern,Sinai Peninsula,Africa_Northern
+Africa_Northern,Sinai Peninsula,Middle East
+Africa_Southern,Africa-East Central Coast,Africa_Eastern
+Africa_Southern,Africa-East Central Coast,Africa_Southern
+Africa_Southern,Africa-Indian Ocean Coast,Africa_Southern
+Africa_Southern,Africa-South Interior,Africa_Southern
+Africa_Southern,Angola-Coast,Africa_Southern
+Africa_Southern,Namibia-Coast,Africa_Southern
+Africa_Southern,Zambezi,Africa_Southern
+Africa_Southern,Zambezi,Africa_Western
+Africa_Western,Africa-West Coast,Africa_Western
+Africa_Western,Congo,Africa_Eastern
+Africa_Western,Congo,Africa_Southern
+Africa_Western,Congo,Africa_Western
+Africa_Western,Gulf of Guinea,Africa_Southern
+Africa_Western,Gulf of Guinea,Africa_Western
+Africa_Western,Lake Chad,Africa_Eastern
+Africa_Western,Lake Chad,Africa_Northern
+Africa_Western,Lake Chad,Africa_Western
+Africa_Western,Niger,Africa_Northern
+Africa_Western,Niger,Africa_Western
+Africa_Western,Senegal,Africa_Western
+Africa_Western,Volta,Africa_Western
+Argentina,Central Patagonia Highlands,Argentina
+Argentina,Mar Chiquita,Argentina
+Argentina,Negro,Argentina
+Argentina,North Argentina-South Atlantic Coast,Argentina
+Argentina,Pampas Region,Argentina
+Argentina,Salinas Grandes,Argentina
+Argentina,South America-Colorado,Argentina
+Argentina,South Argentina-South Atlantic Coast,Argentina
+Argentina,South Argentina-South Atlantic Coast,South America_Southern
+Australia_NZ,Australia-East Coast,Australia_NZ
+Australia_NZ,Australia-Interior,Australia_NZ
+Australia_NZ,Australia-North Coast,Australia_NZ
+Australia_NZ,Australia-South Coast,Australia_NZ
+Australia_NZ,Australia-West Coast,Australia_NZ
+Australia_NZ,Murray-Darling,Australia_NZ
+Australia_NZ,New Zealand,Australia_NZ
+Australia_NZ,Tasmania,Australia_NZ
+Brazil,Amazon,Brazil
+Brazil,Amazon,Colombia
+Brazil,Amazon,South America_Northern
+Brazil,Amazon,South America_Southern
+Brazil,East Brazil-South Atlantic Coast,Brazil
+Brazil,La Plata,Argentina
+Brazil,La Plata,Brazil
+Brazil,La Plata,South America_Southern
+Brazil,North Brazil-South Atlantic Coast,Brazil
+Brazil,Orinoco,Brazil
+Brazil,Orinoco,Colombia
+Brazil,Orinoco,South America_Northern
+Brazil,Orinoco,South America_Southern
+Brazil,Parnaiba,Brazil
+Brazil,Sao Francisco,Brazil
+Brazil,Tocantins,Brazil
+Brazil,Uruguay-Brazil-South Atlantic Coast,Brazil
+Brazil,Uruguay-Brazil-South Atlantic Coast,South America_Southern
+Canada,Atlantic Ocean Seaboard,Canada
+Canada,Churchill,Canada
+Canada,Fraser,Canada
+Canada,Fraser,WA
+Canada,Great Lakes,Canada
+Canada,Great Lakes,IL
+Canada,Great Lakes,IN
+Canada,Great Lakes,ME
+Canada,Great Lakes,MI
+Canada,Great Lakes,MN
+Canada,Great Lakes,NH
+Canada,Great Lakes,NY
+Canada,Great Lakes,OH
+Canada,Great Lakes,PA
+Canada,Great Lakes,VT
+Canada,Great Lakes,WI
+Canada,Hudson Bay Coast,Canada
+Canada,Mackenzie,Canada
+Canada,Northwest Territories,Canada
+Canada,Saskatchewan-Nelson,Canada
+Canada,Saskatchewan-Nelson,MN
+Canada,Saskatchewan-Nelson,MT
+Canada,Saskatchewan-Nelson,ND
+Canada,Saskatchewan-Nelson,SD
+Canada,St Lawrence,Canada
+Central America and Caribbean,Caribbean,Central America and Caribbean
+Central America and Caribbean,Caribbean,FL
+Central America and Caribbean,Southern Central America,Central America and Caribbean
+Central America and Caribbean,Southern Central America,Mexico
+Central Asia,Amu Darya,Central Asia
+Central Asia,Amu Darya,South Asia
+Central Asia,Caspian Sea Coast,Central Asia
+Central Asia,Caspian Sea Coast,Russia
+Central Asia,Caspian Sea-East Coast,Central Asia
+Central Asia,Caspian Sea-East Coast,Middle East
+Central Asia,Caspian Sea-East Coast,South Asia
+Central Asia,Lake Balkash,Central Asia
+Central Asia,Lake Balkash,China
+Central Asia,Syr Darya,Central Asia
+Central Asia,Syr Darya,Russia
+China,Bo Hai-Korean Bay-North Coast,China
+China,Bo Hai-Korean Bay-North Coast,Southeast Asia
+China,China Coast,China
+China,Gobi Interior,Central Asia
+China,Gobi Interior,China
+China,Gobi Interior,Russia
+China,Hainan,China
+China,Huang He,China
+China,Plateau of Tibet Interior,China
+China,Salween,China
+China,Salween,Southeast Asia
+China,South China Sea Coast,China
+China,South China Sea Coast,Southeast Asia
+China,Tarim Interior,Central Asia
+China,Tarim Interior,China
+China,Tarim Interior,Pakistan
+China,Xun Jiang,China
+China,Xun Jiang,Southeast Asia
+China,Yangtze,China
+China,Ziya He-Interior,China
+Colombia,Magdalena,Colombia
+EU-12,Baltic Sea Coast,EU-12
+EU-12,Baltic Sea Coast,Russia
+EU-12,Danube,EU-12
+EU-12,Danube,EU-15
+EU-12,Danube,Europe_Eastern
+EU-12,Danube,Europe_Non_EU
+EU-12,Danube,European Free Trade Association
+EU-12,Neman,EU-12
+EU-12,Neman,Europe_Eastern
+EU-12,Neman,Russia
+EU-12,Oder,EU-12
+EU-12,Oder,EU-15
+EU-12,Poland Coast,EU-12
+EU-12,Poland Coast,Russia
+EU-12,Wisla,EU-12
+EU-12,Wisla,Europe_Eastern
+EU-15,Adriatic Sea-Greece-Black Sea Coast,EU-12
+EU-15,Adriatic Sea-Greece-Black Sea Coast,EU-15
+EU-15,Adriatic Sea-Greece-Black Sea Coast,Europe_Non_EU
+EU-15,Arctic Ocean Islands,Russia
+EU-15,Denmark-Germany Coast,EU-12
+EU-15,Denmark-Germany Coast,EU-15
+EU-15,Douro,EU-15
+EU-15,Ebro,EU-15
+EU-15,Elbe,EU-12
+EU-15,Elbe,EU-15
+EU-15,Ems-Weser,EU-15
+EU-15,England and Wales,EU-15
+EU-15,Finland,EU-15
+EU-15,Finland,Russia
+EU-15,France-South Coast,EU-15
+EU-15,France-West Coast,EU-15
+EU-15,Gironde,EU-15
+EU-15,Guadalquivir,EU-15
+EU-15,Guadiana,EU-15
+EU-15,Ireland,EU-15
+EU-15,Italy-East Coast,EU-15
+EU-15,Italy-West Coast,EU-15
+EU-15,Loire,EU-15
+EU-15,Mediterranean Sea Islands,EU-15
+EU-15,Po,EU-15
+EU-15,Po,European Free Trade Association
+EU-15,Rhine,EU-15
+EU-15,Rhine,European Free Trade Association
+EU-15,Rhone,EU-15
+EU-15,Rhone,European Free Trade Association
+EU-15,Scheldt,EU-15
+EU-15,Scotland,EU-15
+EU-15,Seine,EU-15
+EU-15,Spain-Portugal-Atlantic Coast,EU-15
+EU-15,Spain-South and East Coast,EU-15
+EU-15,Sweden,EU-15
+EU-15,Sweden,European Free Trade Association
+EU-15,Tagus,EU-15
+EU-15,Tiber,EU-15
+Europe_Eastern,Black Sea-North Coast,Europe_Eastern
+Europe_Eastern,Black Sea-North Coast,Russia
+Europe_Eastern,Daugava,EU-12
+Europe_Eastern,Daugava,Europe_Eastern
+Europe_Eastern,Daugava,Russia
+Europe_Eastern,Dnieper,Europe_Eastern
+Europe_Eastern,Dnieper,Russia
+Europe_Eastern,Dniester,EU-12
+Europe_Eastern,Dniester,Europe_Eastern
+Europe_Non_EU,Black Sea-South Coast,Central Asia
+Europe_Non_EU,Black Sea-South Coast,Europe_Non_EU
+Europe_Non_EU,Black Sea-South Coast,Russia
+Europe_Non_EU,Mediterranean Sea-East Coast,Africa_Northern
+Europe_Non_EU,Mediterranean Sea-East Coast,EU-12
+Europe_Non_EU,Mediterranean Sea-East Coast,Europe_Non_EU
+Europe_Non_EU,Mediterranean Sea-East Coast,Middle East
+European Free Trade Association,Iceland,European Free Trade Association
+European Free Trade Association,Scandinavia-North Coast,EU-15
+European Free Trade Association,Scandinavia-North Coast,European Free Trade Association
+European Free Trade Association,Scandinavia-North Coast,Russia
+India,Andaman-Nicobar Islands,NA
+India,Brahamani,India
+India,Cauvery,India
+India,Ganges-Bramaputra,China
+India,Ganges-Bramaputra,India
+India,Ganges-Bramaputra,South Asia
+India,Ganges-Bramaputra,Southeast Asia
+India,Godavari,India
+India,India East Coast,India
+India,India North East Coast,India
+India,India South Coast,India
+India,India West Coast,India
+India,Krishna,India
+India,Mahandi,India
+India,Mahi,India
+India,Narmada,India
+India,Pennar,India
+India,Sabarmati,India
+India,Sabarmati,Pakistan
+India,Tapti,India
+India,Yasai,India
+Indonesia,Irian Jaya Coast,Indonesia
+Indonesia,Irian Jaya Coast,Southeast Asia
+Indonesia,Java-Timor,Indonesia
+Indonesia,Java-Timor,Southeast Asia
+Indonesia,Kalimantan,Indonesia
+Indonesia,Kalimantan,Southeast Asia
+Indonesia,Palau and East Indonesia,Indonesia
+Indonesia,Sulawesi,Indonesia
+Indonesia,Sumatra,Indonesia
+Japan,Japan,Japan
+Mexico,Baja California,Mexico
+Mexico,Grijalva-Usumacinta,Central America and Caribbean
+Mexico,Grijalva-Usumacinta,Mexico
+Mexico,Isthmus of Tehuantepec,Mexico
+Mexico,Mexico-Interior,Mexico
+Mexico,Mexico-Northwest Coast,AZ
+Mexico,Mexico-Northwest Coast,Mexico
+Mexico,Mexico-Northwest Coast,NM
+Mexico,North Gulf,Mexico
+Mexico,Pacific Central Coast,Mexico
+Mexico,Papaloapan,Mexico
+Mexico,Rio Balsas,Mexico
+Mexico,Rio Lerma,Mexico
+Mexico,Rio Verde,Mexico
+Mexico,Yucatan Peninsula,Central America and Caribbean
+Mexico,Yucatan Peninsula,Mexico
+Middle East,Arabian Peninsula,Middle East
+Middle East,Caspian Sea-South West Coast,Central Asia
+Middle East,Caspian Sea-South West Coast,Europe_Non_EU
+Middle East,Caspian Sea-South West Coast,Middle East
+Middle East,Caspian Sea-South West Coast,Russia
+Middle East,Central Iran,Middle East
+Middle East,Dead Sea,Middle East
+Middle East,Eastern Jordan-Syria,Europe_Non_EU
+Middle East,Eastern Jordan-Syria,Middle East
+Middle East,Persian Gulf Coast,Middle East
+Middle East,Red Sea-East Coast,Middle East
+Middle East,Tigris-Euphrates,Europe_Non_EU
+Middle East,Tigris-Euphrates,Middle East
+Pakistan,Arabian Sea Coast,Middle East
+Pakistan,Arabian Sea Coast,Pakistan
+Pakistan,Hamun-i-Mashkel,Middle East
+Pakistan,Hamun-i-Mashkel,Pakistan
+Pakistan,Hamun-i-Mashkel,South Asia
+Pakistan,Indus,China
+Pakistan,Indus,India
+Pakistan,Indus,Pakistan
+Pakistan,Indus,South Asia
+Russia,Amur,Central Asia
+Russia,Amur,China
+Russia,Amur,Russia
+Russia,Don,Europe_Eastern
+Russia,Don,Russia
+Russia,Kara Sea Coast,Russia
+Russia,Lena,Russia
+Russia,Narva,EU-12
+Russia,Narva,Russia
+Russia,Neva,EU-15
+Russia,Neva,Europe_Eastern
+Russia,Neva,Russia
+Russia,Northern Dvina,Russia
+Russia,Ob,Central Asia
+Russia,Ob,China
+Russia,Ob,Russia
+Russia,Russia-Barents Sea Coast,Russia
+Russia,Russia-South East Coast,China
+Russia,Russia-South East Coast,Russia
+Russia,Russia-South East Coast,Southeast Asia
+Russia,Siberia-North Coast,Russia
+Russia,Siberia-West Coast,Russia
+Russia,Ural,Central Asia
+Russia,Ural,Russia
+Russia,Volga,Central Asia
+Russia,Volga,Russia
+Russia,Yenisey,Central Asia
+Russia,Yenisey,Russia
+South Africa,Limpopo,Africa_Southern
+South Africa,Limpopo,South Africa
+South Africa,Orange,Africa_Southern
+South Africa,Orange,South Africa
+South Africa,South Africa-South Coast,Africa_Southern
+South Africa,South Africa-South Coast,South Africa
+South Africa,South Africa-West Coast,South Africa
+South America_Northern,Caribbean Coast,Central America and Caribbean
+South America_Northern,Caribbean Coast,Colombia
+South America_Northern,Caribbean Coast,South America_Northern
+South America_Northern,Northeast South America-South Atlantic Coast,Brazil
+South America_Northern,Northeast South America-South Atlantic Coast,South America_Northern
+South America_Southern,Colombia-Ecuador-Pacific Coast,Central America and Caribbean
+South America_Southern,Colombia-Ecuador-Pacific Coast,Colombia
+South America_Southern,Colombia-Ecuador-Pacific Coast,South America_Southern
+South America_Southern,La Puna Region,Argentina
+South America_Southern,La Puna Region,South America_Southern
+South America_Southern,North Chile-Pacific Coast,Argentina
+South America_Southern,North Chile-Pacific Coast,South America_Southern
+South America_Southern,Peru-Pacific Coast,South America_Southern
+South America_Southern,South Chile-Pacific Coast,Argentina
+South America_Southern,South Chile-Pacific Coast,South America_Southern
+South Asia,Farahrud,Middle East
+South Asia,Farahrud,South Asia
+South Asia,Helmand,Middle East
+South Asia,Helmand,Pakistan
+South Asia,Helmand,South Asia
+South Asia,Sri Lanka,South Asia
+South Korea,North and South Korea,South Korea
+South Korea,North and South Korea,Southeast Asia
+Southeast Asia,Bay of Bengal-North East Coast,India
+Southeast Asia,Bay of Bengal-North East Coast,South Asia
+Southeast Asia,Bay of Bengal-North East Coast,Southeast Asia
+Southeast Asia,Chao Phraya,Southeast Asia
+Southeast Asia,Fly,Indonesia
+Southeast Asia,Fly,Southeast Asia
+Southeast Asia,Gulf of Thailand Coast,Southeast Asia
+Southeast Asia,Hong-Red River,China
+Southeast Asia,Hong-Red River,Southeast Asia
+Southeast Asia,Irrawaddy,China
+Southeast Asia,Irrawaddy,India
+Southeast Asia,Irrawaddy,Southeast Asia
+Southeast Asia,Mekong,China
+Southeast Asia,Mekong,Southeast Asia
+Southeast Asia,North Borneo Coast,Indonesia
+Southeast Asia,North Borneo Coast,Southeast Asia
+Southeast Asia,Papua New Guinea Coast,Southeast Asia
+Southeast Asia,Peninsula Malaysia,Southeast Asia
+Southeast Asia,Philippines,Southeast Asia
+Southeast Asia,Sepik,Southeast Asia
+Southeast Asia,Sittang,Southeast Asia
+Southeast Asia,Solomon Islands,Southeast Asia
+Southeast Asia,South Pacific Islands,Southeast Asia
+Southeast Asia,Viet Nam-Coast,Southeast Asia
+Taiwan,Taiwan,Japan
+Taiwan,Taiwan,Taiwan
+USA,Arkansas White Red,AR
+USA,Arkansas White Red,CO
+USA,Arkansas White Red,KS
+USA,Arkansas White Red,LA
+USA,Arkansas White Red,MO
+USA,Arkansas White Red,NM
+USA,Arkansas White Red,OK
+USA,Arkansas White Red,TX
+USA,California River,CA
+USA,California River,Mexico
+USA,California River,NV
+USA,California River,OR
+USA,Great,CA
+USA,Great,ID
+USA,Great,NV
+USA,Great,OR
+USA,Great,UT
+USA,Great,WY
+USA,Hawaii,HI
+USA,Lower Colorado River,AZ
+USA,Lower Colorado River,CA
+USA,Lower Colorado River,Mexico
+USA,Lower Colorado River,NM
+USA,Lower Colorado River,NV
+USA,Lower Colorado River,UT
+USA,Lower Mississippi River,AR
+USA,Lower Mississippi River,IL
+USA,Lower Mississippi River,KY
+USA,Lower Mississippi River,LA
+USA,Lower Mississippi River,MO
+USA,Lower Mississippi River,MS
+USA,Lower Mississippi River,TN
+USA,Mid Atlantic,CT
+USA,Mid Atlantic,DC
+USA,Mid Atlantic,DE
+USA,Mid Atlantic,MA
+USA,Mid Atlantic,MD
+USA,Mid Atlantic,NC
+USA,Mid Atlantic,NJ
+USA,Mid Atlantic,NY
+USA,Mid Atlantic,PA
+USA,Mid Atlantic,VA
+USA,Mid Atlantic,VT
+USA,Mid Atlantic,WV
+USA,Missouri River,CO
+USA,Missouri River,Canada
+USA,Missouri River,IA
+USA,Missouri River,ID
+USA,Missouri River,KS
+USA,Missouri River,MN
+USA,Missouri River,MO
+USA,Missouri River,MT
+USA,Missouri River,ND
+USA,Missouri River,NE
+USA,Missouri River,SD
+USA,Missouri River,WY
+USA,New England,CT
+USA,New England,Canada
+USA,New England,MA
+USA,New England,ME
+USA,New England,NH
+USA,New England,NY
+USA,New England,RI
+USA,New England,VT
+USA,Ohio River,IL
+USA,Ohio River,IN
+USA,Ohio River,KY
+USA,Ohio River,MD
+USA,Ohio River,NC
+USA,Ohio River,NY
+USA,Ohio River,OH
+USA,Ohio River,PA
+USA,Ohio River,TN
+USA,Ohio River,VA
+USA,Ohio River,WV
+USA,Pacific Northwest,CA
+USA,Pacific Northwest,Canada
+USA,Pacific Northwest,ID
+USA,Pacific Northwest,MT
+USA,Pacific Northwest,NV
+USA,Pacific Northwest,OR
+USA,Pacific Northwest,UT
+USA,Pacific Northwest,WA
+USA,Pacific Northwest,WY
+USA,Pacific and Arctic Coast,AK
+USA,Pacific and Arctic Coast,Canada
+USA,Pacific and Arctic Coast,WA
+USA,Rio Grande River,CO
+USA,Rio Grande River,Mexico
+USA,Rio Grande River,NM
+USA,Rio Grande River,TX
+USA,South Atlantic Gulf,AL
+USA,South Atlantic Gulf,FL
+USA,South Atlantic Gulf,GA
+USA,South Atlantic Gulf,LA
+USA,South Atlantic Gulf,MS
+USA,South Atlantic Gulf,NC
+USA,South Atlantic Gulf,SC
+USA,South Atlantic Gulf,TN
+USA,South Atlantic Gulf,VA
+USA,South Atlantic Gulf,WV
+USA,Tennessee River,AL
+USA,Tennessee River,GA
+USA,Tennessee River,KY
+USA,Tennessee River,MS
+USA,Tennessee River,NC
+USA,Tennessee River,SC
+USA,Tennessee River,TN
+USA,Tennessee River,VA
+USA,Texas Gulf Coast,LA
+USA,Texas Gulf Coast,NM
+USA,Texas Gulf Coast,TX
+USA,Upper Colorado River,AZ
+USA,Upper Colorado River,CO
+USA,Upper Colorado River,NM
+USA,Upper Colorado River,UT
+USA,Upper Colorado River,WY
+USA,Upper Mississippi,IA
+USA,Upper Mississippi,IL
+USA,Upper Mississippi,IN
+USA,Upper Mississippi,KY
+USA,Upper Mississippi,MI
+USA,Upper Mississippi,MN
+USA,Upper Mississippi,MO
+USA,Upper Mississippi,ND
+USA,Upper Mississippi,SD
+USA,Upper Mississippi,WI

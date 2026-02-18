@@ -1,0 +1,161 @@
+sector
+Beef
+Corn
+Dairy
+FeedCrops
+FiberCrop
+FodderGrass
+FodderHerb
+FodderHerb_Residue
+Fruits
+H2 industrial
+Legumes
+MiscCrop
+N fertilizer
+NonFoodDemand_Crops
+NonFoodDemand_Meat
+NonFoodDemand_sawnwood
+NonFoodDemand_woodpulp
+NutsSeeds
+OilCrop
+OtherGrain
+Pasture_FodderGrass
+Pork
+Poultry
+Rice
+RootTuber
+SheepGoat
+Soybean
+SugarCrop
+UnmanagedLand
+Vegetables
+Wheat
+ammonia
+backup_electricity
+biomass
+csp_backup
+delivered coal
+delivered gas
+electricity trade
+gas pipeline
+gas processing
+gas trade statistical differences
+nuclearFuelGenII
+nuclearFuelGenIII
+refined liquids enduse
+refined liquids industrial
+refining
+regional ammonia
+regional beef
+regional biomass
+regional coal
+regional corn
+regional dairy
+regional fibercrop
+regional fruits
+regional industrial_roundwood
+regional iron and steel
+regional legumes
+regional misccrop
+regional nuts_seeds
+regional oil
+regional oilcrop
+regional oilpalm
+regional othergrain
+regional pork
+regional poultry
+regional rice
+regional root_tuber
+regional sawnwood
+regional sheepgoat
+regional soybean
+regional sugarcrop
+regional vegetables
+regional wheat
+regional woodpulp
+sawnwood_processing
+total biomass
+traded Afr_MidE pipeline gas
+traded EUR pipeline gas
+traded LA pipeline gas
+traded LNG
+traded N.Amer pipeline gas
+traded PAC pipeline gas
+traded RUS pipeline gas
+traded ammonia
+traded beef
+traded biomass
+traded coal
+traded corn
+traded dairy
+traded fibercrop
+traded fruits
+traded industrial_roundwood
+traded iron and steel
+traded legumes
+traded misccrop
+traded nuts_seeds
+traded oil
+traded oilcrop
+traded oilpalm
+traded othergrain
+traded pork
+traded poultry
+traded rice
+traded root_tuber
+traded sawnwood
+traded sheepgoat
+traded soybean
+traded sugarcrop
+traded vegetables
+traded wheat
+traded woodpulp
+water_td_an_C
+water_td_an_W
+water_td_irr_ArkWhtRedR_C
+water_td_irr_ArkWhtRedR_W
+water_td_irr_California_C
+water_td_irr_California_W
+water_td_irr_Caribbean_C
+water_td_irr_Caribbean_W
+water_td_irr_FraserR_C
+water_td_irr_FraserR_W
+water_td_irr_GreatBasin_C
+water_td_irr_GreatBasin_W
+water_td_irr_GreatLakes_C
+water_td_irr_GreatLakes_W
+water_td_irr_MexCstNW_C
+water_td_irr_MexCstNW_W
+water_td_irr_MissouriR_C
+water_td_irr_MissouriR_W
+water_td_irr_MissppRN_C
+water_td_irr_MissppRN_W
+water_td_irr_MissppRS_C
+water_td_irr_MissppRS_W
+water_td_irr_NelsonR_C
+water_td_irr_NelsonR_W
+water_td_irr_OhioR_C
+water_td_irr_OhioR_W
+water_td_irr_RioGrande_C
+water_td_irr_RioGrande_W
+water_td_irr_TennR_C
+water_td_irr_TennR_W
+water_td_irr_TexasCst_C
+water_td_irr_TexasCst_W
+water_td_irr_UsaColoRN_C
+water_td_irr_UsaColoRN_W
+water_td_irr_UsaColoRS_C
+water_td_irr_UsaColoRS_W
+water_td_irr_UsaCstE_C
+water_td_irr_UsaCstE_W
+water_td_irr_UsaCstNE_C
+water_td_irr_UsaCstNE_W
+water_td_irr_UsaCstSE_C
+water_td_irr_UsaCstSE_W
+water_td_irr_UsaPacNW_C
+water_td_irr_UsaPacNW_W
+water_td_pri_C
+water_td_pri_W
+wholesale gas
+woodpulp_processing
+NA
