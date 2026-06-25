@@ -23,7 +23,7 @@ REFINING_TYPE  <- c("Oil Refining", "Biorefining", "Coal to Liquids", "Gas to Li
 DEMAND_SECTORS <- c("Industry", "Buildings", "Transportation")
 ELEC_LOADTYPE  <- c("superpeak", "subpeak", "peak", "baseload", "intermediate")
 
-DISPLAY_LEVEL  <- 2   # int, 1-4 currently
+DISPLAY_LEVEL  <- 2   # int, 1-4 currently; lower value = less detail
 KEEP_NAMES     <- c("scenario", "region", "year", "source", "target", "value",
                     "level", "source_color", "target_color")
 
@@ -60,7 +60,7 @@ if (UPDATE_DATA) {                           # run new queries, or
 if (FALSE) { ##. remake fossil resource mapping, set to not do it
   fossil_vint <- read_csv(paste0(data_dir, "ref_res_prod_by_tech_vin.csv"), skip = 1)   # resource production by tech and vintage
   fossil_prod <- fossil_vint %>%
-    filter(Units == "EJ", resource %in% c("coal", "crude oil", "natural gas")) %>%
+    filter(resource %in% c("coal", "crude oil", "natural gas")) %>%   # "PV_resource", "CSP_resource", "distributed_solar"  also included by state; is this helpful to save?
     select(-c(technology, Units)) %>%
     gather_years() %>%
     group_by(scenario, region, resource, subresource, year) %>%
@@ -131,7 +131,6 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
     # remove expected retirement dates from electricity technology names
     clean_cooling_tech_years(column = "technology") %>%
     # collapse electricity modes (e.g Apr/night/superpeak)
-    # TODO: should superpeak really be collapsed here?
     remove_month_day_night_superpeak(sector) %>%
     remove_month_day_night_superpeak(subsector) %>%
     remove_month_day_night_superpeak(technology) %>%
@@ -274,13 +273,9 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
     #       - technology losses kept with technology, 'electricity' losses equal
     #         to transmission losses (factor from gcamdata) and ownuse (e.g.
     #         keep the lights on at the generation station)
-    # TODO: how to use base, peak, subpeak etc?
     # electricity domestic supply comes from grid ownuse/trade
     # proxy to net for now; electricity supplies electricity domestic supply +
     # the rest is "exported electricity"
-    # gcam tells you transmission loss, net ownuse loss,
-    # then last loss; need to sort out trade | before can do loss calc
-    # want OSBL electricity
 
     # this sums every input to the electricity sector
     # (e.g. regional coal, onshore wind resource)
@@ -293,6 +288,13 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
       filter(grepl("Electricity", input_L1)) %>%
       group_by(scenario, region, year, input_L1) %>%
       summarize(value.cons = sum(value), .groups = "drop")
+
+    # get electricity losses per technology
+    elec_loss <- in_tech %>%
+      inner_join(out_tech %>% filter(output == "electricity"),
+                 by = c("Units", "scenario", "region", "year", "sector" = "output",
+                        "subsector", "technology")) %>%
+      mutate(loss = round(value.x - value.y, 13))
 
     # rejected energy -> T&D
 
@@ -436,11 +438,29 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
       summarize(value = sum(value), .groups = "drop")
 
     # TODO: north dakota is broken between refining and liquid fuels for L1
-    plot_sankey(combo_grp, "combo filtering", reg = "CA", yr = 2025)
+    plot_sankey(combo_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"), reg = "TX", yr = 2025)
+
+    # TODO: natural gas to refining is the wrong color in L2 (refining instead of NG)
+    # TODO: L3 has wrong colors and doesn't stack refining techs properly
+    # TODO: condense the labels for the electricity techs
+    # on select just highlight the path you've selected?
+    # make hover over more useful
+    # pin the x axis for stuff like refining and biorefining so they align;
+    #     does it make sense to have like a primary, transformation, end use bar at the bottom?
+    # do a toggle color scheme
+    # update documentation, make choices clear
+    # what does this type of visualization help convey more easily between state EWN?
+    # merge with water stuff
+    # test that other years and time progression works too
+    # is there a better package for styling?
+    # be able to highlight net import / export for diff energy sources?
 
 
-    # TODO: uranium extraction -> ask the matthews
+    # IN PROGRESS
+    # TODO: uranium extraction ->  asked MB
     # TODO: electricity!!! i can't find transmission losses in constants.R
+
+    # STYLING
     # TODO: add horizontal alignment flags
     # TODO: adjust labels to include value and units
     # TODO: figure out how to fix some of the weird auto y position ordering
