@@ -1,0 +1,205 @@
+﻿sector,subsector,technology,input,input_L1,input_L2,input_L3,output_L1,output_L2,output_L3,output_L4
+delivered biomass,delivered biomass,delivered biomass,regional biomass,Biomass,Biomass,Biomass,Biomass,Biomass,Biomass,Biomass
+regional biomass,regional biomass,regional biomass,total biomass,Biomass,Biomass,Biomass,Biomass,Biomass,Biomass,Biomass
+regional biomassOil,regional biomassOil,OilCrop,regional oilcrop,Biomass,Oil Crops,Oil Crops,Biomass,Biomass,Biomass,Biomass
+regional corn for ethanol,regional corn for ethanol,regional corn for ethanol,regional corn,Biomass,Corn,Corn,Biomass,Biomass,Biomass,Biomass
+biomass liquids,biomass liquids,corn ethanol,regional corn for ethanol,Biomass,Corn Ethanol,Corn Ethanol,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,FT biofuels,regional biomass,Biomass,FT biofuels,FT biofuels,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,FT biofuels CCS level 1,regional biomass,Biomass,FT biofuels CCS level 1,FT biofuels CCS level 1,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,FT biofuels CCS level 2,regional biomass,Biomass,FT biofuels CCS level 2,FT biofuels CCS level 2,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,cellulosic ethanol,regional biomass,Biomass,cellulosic ethanol,cellulosic ethanol,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,cellulosic ethanol CCS level 1,regional biomass,Biomass,cellulosic ethanol CCS level 1,cellulosic ethanol CCS level 1,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,cellulosic ethanol CCS level 2,regional biomass,Biomass,cellulosic ethanol CCS level 2,cellulosic ethanol CCS level 2,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,biodiesel,regional biomassOil,Biomass,Biodiesel,Biodiesel,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,corn ethanol,elect_td_ind,Electricity,Corn Ethanol,Corn Ethanol,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,biodiesel,wholesale gas,Natural Gas,Biodiesel,Biodiesel,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,corn ethanol,wholesale gas,Natural Gas,Corn Ethanol,Corn Ethanol,Biorefining,Biorefining,Biorefining,Biorefining
+comm cooking,electricity,electric range,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Cooking,Electric Range
+comm cooking,gas,gas range,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Commercial,Cooking,Gas Range
+comm cooling,electricity,air conditioning,electricity domestic supply,Electricity,Electricity,Electricity,Buildings,Commercial,Cooling,Air Conditioning
+comm cooling,gas,gas cooling,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Commercial,Cooling,Gas Cooling
+comm heating,biomass,wood furnace,delivered biomass,Biomass,Biomass,Biomass,Buildings,Commercial,Heating,Furnace
+comm heating,coal,coal furnace,delivered coal,Coal,Coal,Coal,Buildings,Commercial,Heating,Furnace
+comm heating,electricity,electric furnace,electricity domestic supply,Electricity,Electricity,Electricity,Buildings,Commercial,Heating,Furnace
+comm heating,electricity,electric heat pump,electricity domestic supply,Electricity,Electricity,Electricity,Buildings,Commercial,Heating,Heat Pump
+comm heating,refined liquids,fuel furnace,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Buildings,Commercial,Heating,Furnace
+comm heating,gas,gas furnace,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Commercial,Heating,Furnace
+comm hot water,electricity,electric heat pump water heater,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Hot Water,Heat Pump Water Heater
+comm hot water,electricity,electric resistance water heater,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Hot Water,Resistance Water Heater
+comm hot water,refined liquids,fuel water heater,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Buildings,Commercial,Hot Water,Water Heater
+comm hot water,gas,gas water heater,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Commercial,Hot Water,Water Heater
+comm lighting,electricity,fluorescent,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Lighting,Fluorescent
+comm lighting,electricity,incandescent,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Lighting,Incandescent
+comm lighting,electricity,solid state,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Lighting,Solid State
+comm non-building,electricity,electricity,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Non-Building,Non-Building
+comm office,electricity,office equipment,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Office,Office Equipment
+comm other,electricity,electricity,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Other,Other
+comm other,refined liquids,refined liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Buildings,Commercial,Other,Other
+comm other,gas,gas,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Commercial,Other,Other
+comm refrigeration,electricity,refrigeration,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Refrigeration,Refrigeration
+comm ventilation,electricity,ventilation,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Commercial,Ventilation,Ventilation
+resid clothes dryers,electricity,clothes dryer,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Clothes Dryer
+resid clothes dryers,gas,clothes dryer,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Residential,Appliance,Clothes Dryer
+resid clothes washers,electricity,clothes washer,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Clothes Washer
+resid computers,electricity,electricity,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Computer
+resid cooking,electricity,electric oven,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Cooking,Electric Oven
+resid cooking,refined liquids,lpg oven,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Buildings,Residential,Cooking,LPG Oven
+resid cooking,gas,gas oven,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Residential,Cooking,Gas Oven
+resid cooling,electricity,air conditioning,electricity domestic supply,Electricity,Electricity,Electricity,Buildings,Residential,Cooling,Air Conditioning
+resid dishwashers,electricity,dishwasher,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Dishwasher
+resid freezers,electricity,freezer,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Freezer
+resid furnace fans,electricity,electricity,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Heating,Furnace Fan
+resid heating,biomass,wood furnace,delivered biomass,Biomass,Biomass,Biomass,Buildings,Residential,Heating,Furnace
+resid heating,electricity,electric furnace,electricity domestic supply,Electricity,Electricity,Electricity,Buildings,Residential,Heating,Furnace
+resid heating,electricity,electric heat pump,electricity domestic supply,Electricity,Electricity,Electricity,Buildings,Residential,Heating,Heat Pump
+resid heating,refined liquids,fuel furnace,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Buildings,Residential,Heating,Furnace
+resid heating,gas,gas furnace,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Residential,Heating,Furnace
+resid hot water,electricity,electric heat pump water heater,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Heat Pump Water Heater
+resid hot water,electricity,electric resistance water heater,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Resistance Water Heater
+resid hot water,refined liquids,fuel water heater,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Buildings,Residential,Appliance,Water Heater
+resid hot water,gas,gas water heater,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Residential,Appliance,Water Heater
+resid lighting,electricity,fluorescent,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Lighting,Fluorescent
+resid lighting,electricity,incandescent,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Lighting,Incandescent
+resid lighting,electricity,solid state,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Lighting,Solid State
+resid other,electricity,electricity,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Other,Other
+resid other,refined liquids,refined liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Buildings,Residential,Other,Other
+resid other,gas,gas,delivered gas,Natural Gas,Natural Gas,Natural Gas,Buildings,Residential,Other,Other
+resid refrigerators,electricity,refrigerator,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Refrigerator
+resid televisions,electricity,electricity,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Television
+delivered coal,delivered coal,delivered coal,regional coal,Coal,Coal,Coal,Coal,Coal,Coal,Coal
+regional coal,regional coal,regional coal,coal,Coal,Coal,Coal,Coal,Coal,Coal,Coal
+coal to liquids,coal to liquids,coal to liquids CCS level 1,regional coal,Coal,CTL CCS Level 1,CTL CCS Level 1,Coal to Liquids,Coal to Liquids,Coal to Liquids,Coal to Liquids
+coal to liquids,coal to liquids,coal to liquids CCS level 2,regional coal,Coal,CTL CCS Level 2,CTL CCS Level 2,Coal to Liquids,Coal to Liquids,Coal to Liquids,Coal to Liquids
+H2 distribution,H2 distribution,H2 distribution,H2 central production,Central Production,Central Production,Central Production,Distribution,Distribution,Distribution,Distribution
+baseload electricity,,,baseload electricity,Electricity,Electricity,Electricity,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (conv) (dry cooling),regional biomass,Biomass,Biomass Conv,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (conv) (recirculating),regional biomass,Biomass,Biomass Conv,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (IGCC) (dry cooling),regional biomass,Biomass,Biomass IGCC,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (IGCC) (recirculating),regional biomass,Biomass,Biomass IGCC,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (IGCC) (seawater),regional biomass,Biomass,Biomass IGCC,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (conv pul) (cooling pond),regional coal,Coal,Coal Conv Pul,Cooling Pond,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (conv pul) (dry cooling),regional coal,Coal,Coal Conv Pul,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (conv pul) (once through),regional coal,Coal,Coal Conv Pul,Once Through,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (conv pul) (recirculating),regional coal,Coal,Coal Conv Pul,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (conv pul) (seawater),regional coal,Coal,Coal Conv Pul,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (conv pul CCS) (dry cooling),regional coal,Coal,Coal Conv Pul CCS,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (conv pul CCS) (recirculating),regional coal,Coal,Coal Conv Pul CCS,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (IGCC) (dry cooling),regional coal,Coal,Coal IGCC,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (IGCC CCS) (dry cooling),regional coal,Coal,Coal IGCC CCS,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (IGCC CCS) (recirculating),regional coal,Coal,Coal IGCC CCS,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (IGCC CCS) (seawater),regional coal,Coal,Coal IGCC CCS,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,geothermal,geothermal (recirculating),geothermal,Geothermal,Geothermal,Geothermal,Electricity,Electricity,Electricity,Electricity
+electricity,hydro,hydro,water_td_elec_C,Hydropower,Hydropower,Hydropower,Electricity,Electricity,Electricity,Electricity
+electricity,refined liquids,refined liquids (CC) (dry cooling),refined liquids industrial,Liquid Fuels,Liquid Fuels CC,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CT) (cooling pond),wholesale gas,Natural Gas,Gas CT,Cooling Pond,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CT) (dry cooling),wholesale gas,Natural Gas,Gas CT,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CT) (recirculating),wholesale gas,Natural Gas,Gas CT,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CT) (seawater),wholesale gas,Natural Gas,Gas CT,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CC CCS) (dry cooling),wholesale gas,Natural Gas,Natural Gas  CC CCS,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CC CCS) (recirculating),wholesale gas,Natural Gas,Natural Gas  CC CCS,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CC CCS) (seawater),wholesale gas,Natural Gas,Natural Gas  CC CCS,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CC) (cooling pond),wholesale gas,Natural Gas,Natural Gas CC,Cooling Pond,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CC) (dry cooling),wholesale gas,Natural Gas,Natural Gas CC,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CC) (once through),wholesale gas,Natural Gas,Natural Gas CC,Once Through,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CC) (recirculating),wholesale gas,Natural Gas,Natural Gas CC,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (CC) (seawater),wholesale gas,Natural Gas,Natural Gas CC,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (steam) (cooling pond),wholesale gas,Natural Gas,Steam,Cooling Pond,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (steam) (once through),wholesale gas,Natural Gas,Steam,Once Through,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (steam) (recirculating),wholesale gas,Natural Gas,Steam,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,gas,gas (steam) (seawater),wholesale gas,Natural Gas,Steam,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,nuclear,Gen_II_LWR (cooling pond),nuclearFuelGenII,Nuclear,Gen II LWR,Cooling Pond,Electricity,Electricity,Electricity,Electricity
+electricity,nuclear,Gen_II_LWR (once through),nuclearFuelGenII,Nuclear,Gen II LWR,Once Through,Electricity,Electricity,Electricity,Electricity
+electricity,nuclear,Gen_II_LWR (recirculating),nuclearFuelGenII,Nuclear,Gen II LWR,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,nuclear,Gen_II_LWR (seawater),nuclearFuelGenII,Nuclear,Gen II LWR,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,nuclear,Gen_III (cooling pond),nuclearFuelGenIII,Nuclear,Gen III,Cooling Pond,Electricity,Electricity,Electricity,Electricity
+electricity,nuclear,Gen_III (once through),nuclearFuelGenIII,Nuclear,Gen III,Once Through,Electricity,Electricity,Electricity,Electricity
+electricity,nuclear,Gen_III (recirculating),nuclearFuelGenIII,Nuclear,Gen III,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,nuclear,Gen_III (seawater),nuclearFuelGenIII,Nuclear,Gen III,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,solar,CSP (dry_hybrid),CSP_resource,Solar,CSP,Dry Hybrid,Electricity,Electricity,Electricity,Electricity
+electricity,solar,CSP (recirculating),CSP_resource,Solar,CSP,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,solar,PV,PV_resource,Solar,PV,PV,Electricity,Electricity,Electricity,Electricity
+electricity,wind,wind_offshore,offshore wind resource,Wind,Offshore,Offshore,Electricity,Electricity,Electricity,Electricity
+electricity,wind,wind,onshore wind resource,Wind,Onshore,Onshore,Electricity,Electricity,Electricity,Electricity
+electricity domestic supply,electricity_net_ownuse,electricity_net_ownuse,electricity_net_ownuse,Electricity Ownuse,Electricity Ownuse,Electricity Ownuse,Electricity,Electricity,Electricity,Electricity
+electricity domestic supply,electricity trade,EIC_electricity trade,EIC_electricity trade,Electricity Trade,EIC,EIC,Electricity,Electricity,Electricity,Electricity
+electricity domestic supply,electricity trade,WECC_electricity trade,WECC_electricity trade,Electricity Trade,WECC,WECC,Electricity,Electricity,Electricity,Electricity
+gas pipeline,gas pipeline,gas pipeline,gas processing,Gas Processing,Gas Processing,Gas Processing,Gas Pipeline,Gas Pipeline,Gas Pipeline,Gas Pipeline
+gas processing,biomass gasification,biomass gasification,regional biomass,Biomass,Biomass Gasification,Biomass Gasification,Gas Processing,Gas Processing,Gas Processing,Gas Processing
+gas processing,natural gas,natural gas,regional natural gas,Natural Gas,Natural Gas,Natural Gas,Gas Processing,Gas Processing,Gas Processing,Gas Processing
+gas to liquids,gas to liquids,gas to liquids,regional natural gas,Natural Gas,Gas to Liquids,Gas to Liquids,Gas to Liquids,Gas to Liquids,Gas to Liquids,Gas to Liquids
+H2 central production,biomass,biomass to H2 CCS,regional biomass,Biomass,Biomass CCS,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
+H2 central production,biomass,biomass to H2,regional biomass,Biomass,Central Production,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
+H2 central production,coal,coal chemical CCS,regional coal,Coal,Chemical CCS,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
+H2 central production,gas,natural gas steam reforming,regional natural gas,Natural Gas,Steam Reforming,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
+H2 central production,nuclear,thermal splitting,nuclearFuelGenIII,Nuclear,Thermal Splitting,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
+H2 enduse,H2 distribution,H2 distribution,H2 distribution,Distribution,Distribution,Distribution,Hydrogen,Hydrogen,Hydrogen,Hydrogen
+H2 enduse,H2 forecourt production,H2 forecourt production,H2 forecourt production,Forecourt,Forecourt,Forecourt,Hydrogen,Hydrogen,Hydrogen,Hydrogen
+H2 forecourt production,gas,natural gas steam reforming,delivered gas,Natural Gas,Steam Reforming,Forecourt,Hydrogen,Hydrogen,Hydrogen,Hydrogen
+cement,cement,cement,elect_td_ind,Electricity,Electricity,Electricity,Industry,Cement,Cement,Cement
+cement,cement,cement CCS,elect_td_ind,Electricity,Electricity,Electricity,Industry,Cement,Cement CCS,Cement CCS
+cement,cement,cement,process heat cement,Industry,Process Heat,Process Heat,Industry,Cement,Cement,Cement
+cement,cement,cement CCS,process heat cement,Industry,Process Heat,Process Heat,Industry,Cement,Cement CCS,Cement CCS
+industrial energy use,biomass,biomass,delivered biomass,Biomass,Biomass,Biomass,Industry,Industrial Energy Use,Industrial Energy Use,Industrial Energy Use
+industrial energy use,biomass,biomass cogen,delivered biomass,Biomass,Biomass,Biomass,Industry,Industrial Energy Use,Cogeneration,Cogeneration
+industrial energy use,coal,coal,delivered coal,Coal,Coal,Coal,Industry,Industrial Energy Use,Industrial Energy Use,Industrial Energy Use
+industrial energy use,coal,coal cogen,delivered coal,Coal,Coal,Coal,Industry,Industrial Energy Use,Cogeneration,Cogeneration
+industrial energy use,electricity,electricity,elect_td_ind,Electricity,Electricity,Electricity,Industry,Industrial Energy Use,Industrial Energy Use,Industrial Energy Use
+industrial energy use,hydrogen,hydrogen,H2 enduse,Hydrogen,Hydrogen,Hydrogen,Industry,Industrial Energy Use,Industrial Energy Use,Industrial Energy Use
+industrial energy use,hydrogen,hydrogen cogen,H2 enduse,Hydrogen,Hydrogen,Hydrogen,Industry,Industrial Energy Use,Cogeneration,Cogeneration
+industrial energy use,refined liquids,refined liquids,refined liquids industrial,Liquid Fuels,Liquid Fuels,Liquid Fuels,Industry,Industrial Energy Use,Industrial Energy Use,Industrial Energy Use
+industrial energy use,refined liquids,refined liquids cogen,refined liquids industrial,Liquid Fuels,Liquid Fuels,Liquid Fuels,Industry,Industrial Energy Use,Cogeneration,Cogeneration
+industrial energy use,gas,gas,wholesale gas,Natural Gas,Natural Gas,Natural Gas,Industry,Industrial Energy Use,Industrial Energy Use,Industrial Energy Use
+industrial energy use,gas,gas cogen,wholesale gas,Natural Gas,Natural Gas,Natural Gas,Industry,Industrial Energy Use,Cogeneration,Cogeneration
+industrial feedstocks,refined liquids,refined liquids,refined liquids industrial,Liquid Fuels,Liquid Fuels,Liquid Fuels,Industry,Industrial Feedstocks,Industrial Feedstocks,Industrial Feedstocks
+industrial feedstocks,gas,gas,wholesale gas,Natural Gas,Natural Gas,Natural Gas,Industry,Industrial Feedstocks,Industrial Feedstocks,Industrial Feedstocks
+industry,industry,industry,industrial energy use,Industry,Industry,Industry,Industry,Industry,Industry,Industry
+industry,industry,industry,industrial feedstocks,Industry,Industry,Industry,Industry,Industry,Industry,Industry
+N fertilizer,gas,gas,wholesale gas,Natural Gas,Natural Gas,Natural Gas,Industry,N Fertilizer,N Fertilizer,N Fertilizer
+N fertilizer,gas,gas CCS,wholesale gas,Natural Gas,Natural Gas,Natural Gas,Industry,N Fertilizer,N Fertilizer CCS,N Fertilizer CCS
+process heat cement,biomass,biomass,delivered biomass,Biomass,Biomass,Biomass,Industry,Process Heat,Process Heat,Process Heat
+process heat cement,coal,coal,delivered coal,Coal,Coal,Coal,Industry,Process Heat,Process Heat,Process Heat
+process heat cement,refined liquids,refined liquids,refined liquids industrial,Liquid Fuels,Liquid Fuels,Liquid Fuels,Industry,Process Heat,Process Heat,Process Heat
+process heat cement,gas,gas,wholesale gas,Natural Gas,Natural Gas,Natural Gas,Industry,Process Heat,Process Heat,Process Heat
+refining,biomass liquids,biomass liquids,biomass liquids,Biorefining,Biorefining,Biorefining,Liquid Fuels,Liquid Fuels,Liquid Fuels,Liquid Fuels
+refining,coal to liquids,coal to liquids,coal to liquids,Coal to Liquids,Coal to Liquids,Coal to Liquids,Liquid Fuels,Liquid Fuels,Liquid Fuels,Liquid Fuels
+refining,gas to liquids,gas to liquids,gas to liquids,Gas to Liquids,Gas to Liquids,Gas to Liquids,Liquid Fuels,Liquid Fuels,Liquid Fuels,Liquid Fuels
+refining,oil refining,oil refining,oil refining,Oil Refining,Oil Refining,Oil Refining,Liquid Fuels,Liquid Fuels,Liquid Fuels,Liquid Fuels
+delivered gas,delivered gas,delivered gas,gas pipeline,Gas Pipeline,Gas Pipeline,Gas Pipeline,Natural Gas,Natural Gas,Natural Gas,Natural Gas
+regional natural gas,regional natural gas,regional natural gas,natural gas,Natural Gas,Natural Gas,Natural Gas,Natural Gas,Natural Gas,Natural Gas,Natural Gas
+wholesale gas,wholesale gas,wholesale gas,gas pipeline,Gas Pipeline,Gas Pipeline,Gas Pipeline,Natural Gas,Natural Gas,Natural Gas,Natural Gas
+nuclearFuelGenII,enrichedUranium,enrichedUranium,uranium,Uranium,Uranium,Uranium,Nuclear Fuel,Nuclear Fuel Gen I,Nuclear Fuel Gen I,Nuclear Fuel Gen I
+nuclearFuelGenIII,enrichedUranium,enrichedUranium,uranium,Uranium,Uranium,Uranium,Nuclear Fuel,Nuclear Fuel Gen II,Nuclear Fuel Gen II,Nuclear Fuel Gen II
+regional oil,crude oil,crude oil,crude oil,Crude Oil,Crude Oil,Crude Oil,Oil,Oil,Oil,Oil
+regional oil,unconventional oil,unconventional oil,traded unconventional oil,Unconventional Oil,Unconventional Oil,Unconventional Oil,Oil,Oil,Oil,Oil
+oil refining,oil refining,oil refining,elect_td_ind,Electricity,Oil Refining,Oil Refining,Oil Refining,Oil Refining,Oil Refining,Oil Refining
+oil refining,oil refining,oil refining,wholesale gas,Natural Gas,Oil Refining,Oil Refining,Oil Refining,Oil Refining,Oil Refining,Oil Refining
+oil refining,oil refining,oil refining,regional oil,Oil,Oil Refining,Oil Refining,Oil Refining,Oil Refining,Oil Refining,Oil Refining
+trn_aviation_intl,International Aviation,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Aviation,International Aviation,International Aviation
+trn_freight,Domestic Ship,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Ship,Freight,Domestic Ship
+trn_freight,Freight Rail,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Rail,Freight,Freight Rail
+trn_freight_road,Heavy truck,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Road,Freight,Heavy truck
+trn_freight_road,Light truck,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Road,Freight,Light truck
+trn_freight_road,Medium truck,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Road,Freight,Medium truck
+trn_freight_road,Heavy truck,NG,delivered gas,Natural Gas,Natural Gas,Natural Gas,Transport,Road,Freight,Heavy truck
+trn_freight_road,Light truck,NG,delivered gas,Natural Gas,Natural Gas,Natural Gas,Transport,Road,Freight,Light truck
+trn_freight_road,Medium truck,NG,delivered gas,Natural Gas,Natural Gas,Natural Gas,Transport,Road,Freight,Medium truck
+trn_pass,HSR,Electric,elect_td_trn,Electricity,Electricity,Electricity,Transport,Rail,Passenger,High Speed Rail
+trn_pass,Passenger Rail,Electric,elect_td_trn,Electricity,Electricity,Electricity,Transport,Rail,Passenger,Passenger Rail
+trn_pass,Domestic Aviation,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Aviation,Passenger,Domestic Aviation
+trn_pass,Passenger Rail,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Rail,Passenger,Passenger Rail
+trn_pass_road,Bus,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Road,Passenger,Bus
+trn_pass_road,Bus,NG,delivered gas,Natural Gas,Natural Gas,Natural Gas,Transport,Road,Passenger,Bus
+trn_pass_road_LDV,2W and 3W,BEV,elect_td_trn,Electricity,Electricity,Electricity,Transport,Road,Passenger,2W and 3W
+trn_pass_road_LDV,2W and 3W,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Road,Passenger,2W and 3W
+trn_pass_road_LDV_4W,Car,BEV,elect_td_trn,Electricity,Electricity,Electricity,Transport,Road,Passenger,Car
+trn_pass_road_LDV_4W,Large Car and Truck,BEV,elect_td_trn,Electricity,Electricity,Electricity,Transport,Road,Passenger,Large Car and Truck
+trn_pass_road_LDV_4W,Car,FCEV,H2 enduse,Hydrogen,Hydrogen,Hydrogen,Transport,Road,Passenger,Car
+trn_pass_road_LDV_4W,Large Car and Truck,FCEV,H2 enduse,Hydrogen,Hydrogen,Hydrogen,Transport,Road,Passenger,Large Car and Truck
+trn_pass_road_LDV_4W,Car,Hybrid Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Road,Passenger,Car
+trn_pass_road_LDV_4W,Car,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Road,Passenger,Car
+trn_pass_road_LDV_4W,Large Car and Truck,Hybrid Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Road,Passenger,Large Car and Truck
+trn_pass_road_LDV_4W,Large Car and Truck,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Road,Passenger,Large Car and Truck
+trn_pass_road_LDV_4W,Car,NG,delivered gas,Natural Gas,Natural Gas,Natural Gas,Transport,Road,Passenger,Car
+trn_pass_road_LDV_4W,Large Car and Truck,NG,delivered gas,Natural Gas,Natural Gas,Natural Gas,Transport,Road,Passenger,Large Car and Truck
+trn_shipping_intl,International Ship,Liquids,refined liquids enduse,Liquid Fuels,Liquid Fuels,Liquid Fuels,Transport,Ship,Freight,International Ship
+traded unconventional oil,USA unconventional oil,USA unconventional oil,unconventional oil production,Unconventional Oil,Unconventional Oil,Unconventional Oil,Unconventional Oil,Unconventional Oil,Unconventional Oil,Unconventional Oil
