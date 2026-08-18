@@ -10,20 +10,28 @@ library("visNetwork")
 # 0. Setup ----------------------------------------------------------------
 source("./R/0_functions.R")
 
+# User choices
 UPDATE_DATA    <- FALSE
 PLOTS_ON       <- TRUE
 SCENARIO       <- "rcp45cooler_ssp3"
 FILTER_YEARS   <- 2025
+DISPLAY_LEVEL  <- 2   # int, 1-4 currently; lower value = less detail
+COLOR_LEVEL    <- "DETAILED"
 
-RENEWABLES     <- c("Nuclear", "Wind", "Solar", "Biomass", "Hydrogen", "Hydropower")
+
+# Primary fuels
+RENEWABLES     <- c("Nuclear", "Wind", "Solar", "Biomass", "Hydrogen", "Hydropower", "Geothermal")
 FOSSIL_FUELS   <- c("Coal", "Oil", "Natural Gas")
 FOSSIL_MAPPING <- c("coal", "crude oil", "unconventional oil", "natural gas")
+
+# Secondary fuels
 SECONDARY_EN   <- c("Electricity", "Liquid Fuels")
 REFINING_TYPE  <- c("Oil Refining", "Biorefining", "Coal to Liquids", "Gas to Liquids")
-DEMAND_SECTORS <- c("Industry", "Buildings", "Transportation")
 ELEC_LOADTYPE  <- c("superpeak", "subpeak", "peak", "baseload", "intermediate")
+TD_IO          <- 1.06237346267644    # 2021 USA I:O value for L126.IO_R_electd_F_Yh
 
-DISPLAY_LEVEL  <- 2   # int, 1-4 currently; lower value = less detail
+# End use
+DEMAND_SECTORS <- c("Industry", "Buildings", "Transportation")
 KEEP_NAMES     <- c("scenario", "region", "year", "source", "target", "value",
                     "level", "source_color", "target_color")
 
@@ -55,17 +63,44 @@ if (UPDATE_DATA) {                           # run new queries, or
   # TODO: should this just be in 0_functions as a preload?
   inputs_map       <- read_csv(paste0(data_dir, "./mappings/inputs_tech_mapping.csv"))
   fossil_prod      <- read_csv(paste0(data_dir, "/GCAMUSA_fossil_resource_production.csv"))
+  seds_2024        <- read_csv(paste0(data_dir, "/seds_2024.csv"))
+  uranium_2025     <- read_csv(paste0(data_dir, "/qupd_tbl1_uranium_quarterly_25.csv"), skip = 7)
+  uranium_purchase <- read_csv(paste0(data_dir, "/umartableS1afigureS1.csv"), skip = 7)
 }
 
-if (FALSE) { ##. remake fossil resource mapping, set to not do it
-  fossil_vint <- read_csv(paste0(data_dir, "ref_res_prod_by_tech_vin.csv"), skip = 1)   # resource production by tech and vintage
+##. remake fossil resource mapping, default has this turned off and instead
+##  uses the presaved processed file
+if (FALSE) {
+  # resource production by tech and vintage
+  fossil_vint <- read_csv(paste0(data_dir, "ref_res_prod_by_tech_vin.csv"), skip = 1)
   fossil_prod <- fossil_vint %>%
-    filter(resource %in% c("coal", "crude oil", "natural gas")) %>%   # "PV_resource", "CSP_resource", "distributed_solar"  also included by state; is this helpful to save?
+    # "PV_resource", "CSP_resource", "distributed_solar"  also included by state
+    # in this query. it might be helpful to save them in the future, especially
+    # if more renewables added
+    filter(resource %in% c("coal", "crude oil", "natural gas")) %>%
     select(-c(technology, Units)) %>%
     gather_years() %>%
     group_by(scenario, region, resource, subresource, year) %>%
     summarize(value = sum(value), .groups = "drop")
   write_csv(fossil_prod, paste0(data_dir, "/GCAMUSA_fossil_resource_production.csv"))
+
+  # do the same pre-processing for SEDS
+  seds_complete_2024 <- read_csv(paste0(data_dir, "/complete_seds_2024/complete_seds.csv"))
+  seds_codes <- read_csv(paste0(data_dir, "/complete_seds_2024/seds_codes.csv"))
+
+  seds_2024 <- seds_complete_2024 %>%
+    # HYTCP: Hydroelectricity total net generation
+    # ELISP: Net interstate flow of electricity (negative indicates flow out of state)
+    # keeping three years to have options in case ratios are off. will default
+    # to using 2021 as it aligns with the most current GCAM base year
+    filter(MSN %in% c("HYTCP", "ELISP"), Year %in% c(2015, 2021, 2024)) %>%
+    select(-Data_Status) %>%      # don't need to keep the data set publish year
+    left_join(seds_codes, by = "MSN") %>%
+    # reporting value for selected codes is million kWh, convert to EJ for GCAM
+    mutate(value = Data * 3.6E-6) %>%
+    select(region = StateCode, year = Year, description = Description, value)
+  write_csv(seds_2024, paste0(data_dir, "/seds_2024.csv"))
+
 }
 
 { ## . extract from queries ----
@@ -75,10 +110,13 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
   resource_prod   <- getQuery(prj, "resource production")
 }
 
+# for hydropower: HOW DID I BREAK THIS WHERE DID IT GO; there's EJ hydro in outputs by tech, compare with seds??
+# for hydrogen:
+# for biomass:
+# for corn for etoh:
 
 # 2. Extract energy and water flows ---------------------------------------
 # TODO: may need to separate location filter part of pipeline
-# TODO: divide uranium mining to correct states
 # TODO: should superpeak/base really be collapsed here? or removed?
 {
   ## . clean up fields ----
@@ -89,14 +127,12 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
     extract_state() %>%
     mutate(# fix incorrect units to allow filtering by EJ next
       Units = case_when(
-        subsector == "hydro" ~ "EJ",
         input %in% c("regional corn", "regional oilcrop") ~ "Mt",
         input == "seawater" ~ "km^3",
         input == "industrial processes" ~ NA,
         TRUE ~ Units),
       scenario = factor(scenario)) %>%
-    filter(Units %in% c("EJ") | grepl("uranium", input),
-      scenario %in% SCENARIO,
+    filter(Units %in% c("EJ") | input %in% c("uranium"), scenario %in% SCENARIO,
       # remove intl trade volumes (e.g. Africa_Eastern traded biomass)
       !grepl(paste(c("USA", nonUSregions), collapse = "|"), subsector),
       # remove irrelevant inputs
@@ -168,6 +204,31 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
     select(scenario, region = region.y, source = subresource, target = resource,
            year, value = cal_rsrc)
 
+  # downscale uranium for nuclear as it is not on the state level in IM3 GCAMUSA
+  # data is from EIA Domestic Uranium Production Quarterly Report, Table 1
+  # from the Q1 2026 report and represents uranium concentrate production in lbs
+  state_uranium <- uranium_2025 %>%
+    pivot_longer(names_to = "year", values_to = "value", cols = -c(Facility, Location, State)) %>%
+    filter(!is.na(Location), grepl("2025", year)) %>%
+    group_by(region = State) %>%
+    summarize(value = sum(value, na.rm = TRUE), .groups = "drop") %>%
+    mutate(resource = "uranium", share_us_prod = value / sum(value))
+
+  # according to EIA Uranium Marketing Annual Report Table S1a, the US purchased
+  # a total of 46.9 million lbs U3O8 equivalent in 2025. the U.S.-origin value
+  # doesn't match the quarterly report figures, possibly because of country of
+  # origin changing mid-supply chain (e.g. mined elsewhere and enriched in the US)
+  uranium_sources <- uranium_purchase %>%
+    select(year = `Delivery year`, total = `Total purchased`, us_origin = `U.S.-origin uranium`) %>%
+    filter(us_origin != "W", year %in% FILTER_YEARS) %>%
+    mutate(resource = "uranium") %>%
+    left_join(state_uranium, by = "resource") %>%
+    mutate(total =  as.numeric(total),
+           us_origin = as.numeric(us_origin),
+           value.mmlb = us_origin * share_us_prod,
+           non_us = total - us_origin) %>%
+    select(region, year, value.mmlb, us_origin, non_us)
+
 
 # 4. Process primary and secondary energy ---------------------------------
   # TODO: remove these two after testing
@@ -180,8 +241,60 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
     drop_na(input_L1) %>%
     filter(output_L1 != input_L1)
 
+  simple_outputs <- out_tech %>%
+    filter(region %in% states) %>%
+    left_join(inputs_map, by = join_by(sector, subsector, technology)) %>%
+    drop_na(input_L1) %>%
+    filter(output_L1 != input_L1)
+
+  usa_only_in <- in_tech %>%
+    filter(region == "USA") %>%
+    left_join(inputs_map, by = join_by(sector, subsector, technology, input)) %>%
+    drop_na(input_L1) %>%
+    filter(output_L1 != input_L1)
+
+  usa_only_out <- out_tech %>%
+    filter(region == "USA") %>%
+    left_join(inputs_map, by = join_by(sector, subsector, technology)) %>%
+    drop_na(input_L1) %>%
+    filter(output_L1 != input_L1)
+
+
   ## PRIMARY ENERGY PROCESSING ------------------
   {
+    uranium_cons <- simple_sources %>%
+      # thermal splitting for H2 production not on the state level in this GCAM
+      # version so have to add back in the USA region before filtering inputs
+      # TODO: can't yet though because don't have the connection in the H2 sector rn!
+      #rbind(usa_only) %>%
+      filter(grepl("nuclear", input)) %>%
+      group_by(scenario, region, year, source = input_L1) %>%
+      summarize(value.cons = sum(value), .groups = "drop") %>%
+      mutate(source = "Uranium")
+
+    # TODO: separate out biomass and hydrogen trade; currently assume production = consumption
+    non_fossil_prod <- simple_sources %>%
+      filter(input_L1 %in% RENEWABLES) %>%
+      select(scenario, region, year, source = input_L1, target = output_L1, value)
+
+    # attribute nuclearFuel to state where concentrate is produced due to data
+    # availability and to simplify the supply chain representation; if future
+    # branches separate enrichment from mining activities will need to update
+    uranium_imports <- uranium_sources %>%
+      mutate(region = "USA") %>%
+      select(region, year, value.mmlb = non_us) %>%
+      distinct()
+
+    uranium_prod <- uranium_sources %>%
+      select(-us_origin, -non_us) %>%
+      rbind(uranium_imports) %>%
+      mutate(share = value.mmlb / sum(value.mmlb), year = as.integer(year)) %>%
+      # don't need non-us origin line item after shares calculated
+      filter(region != "USA") %>%
+      left_join(uranium_cons, by = c("region", "year")) %>%
+      mutate(value.prod = sum(value.cons) * share) %>%
+      select(scenario, region, year, source, value.prod)
+
     primary_en_cons <- simple_sources %>%
       rename(source = input_L1, target = output_L1) %>%
       # PRIMARY_EN label is specific to resource query so instead exclude
@@ -189,20 +302,15 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
       # TODO: this might be okay for fossil_mapping now
       filter(source %!in% c(SECONDARY_EN, REFINING_TYPE)) %>%
       group_by(scenario, region, year, source) %>%
-      summarize(value.cons = sum(value), .groups = "drop")
-
-    # TODO: separate out biomass and hydrogen trade; same for uranium mining
-    #   (does GCAM have separate location for enrichment and extraction?)
-    # Currently assume production = consumption for all renewables
-    non_fossil_prod <- simple_sources %>%
-      filter(input_L1 %in% RENEWABLES) %>%
-      select(scenario, region, year, source = input_L1, target = output_L1, value)
+      summarize(value.cons = sum(value), .groups = "drop") %>%
+      rbind(uranium_cons)
 
     primary_en_prod <- state_fossil_rsrc %>%  # coal, NG, oil
       swap_source_target() %>%
       rbind(non_fossil_prod) %>%
       group_by(scenario, region, year, source) %>%
-      summarize(value.prod = sum(value), .groups = "drop")
+      summarize(value.prod = sum(value), .groups = "drop") %>%
+      rbind(uranium_prod)
 
     # Display net trade (either imports or exports)
     primary_en_tradebal <- primary_en_prod %>%
@@ -214,9 +322,9 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
       select(-value.prod, -value.cons)
 
     primary_prod_clean <- primary_en_tradebal %>%
-      filter(import > 0 | export > 0) %>%   #
+      filter(import > 0 | export > 0) %>%
       left_join(primary_en_prod, by = c("scenario", "region", "year", "source")) %>%
-      mutate(target = source,
+      mutate(target = if_else(source == "Uranium", "Nuclear", source),
              source = paste0("Produced ", source)) %>%
       select(scenario, region, year, source, target, value = value.prod) %>%
       na.omit()
@@ -281,47 +389,134 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
     # (e.g. regional coal, onshore wind resource)
     elec_inputs <- simple_sources %>%
       filter(grepl("Electricity", output_L1)) %>%
-      group_by(scenario, region, year, output_L1) %>%
-      summarize(value.prod = sum(value), .groups = "drop")
+      select(scenario, region, year, sector, subsector, technology, val.in = value)
 
-    elec_demands <- simple_sources %>%
+    # final electricity produced by each generation technology
+    elec_gen_out <- simple_outputs %>%
+      filter(output == "electricity") %>%
+      rename(val.out = value)
+
+    # sums produced electricity by state and calculates TD losses for the total
+    elec_gen_out_tot <- elec_gen_out %>%
+      group_by(scenario, region, year) %>%
+      summarize(val.prod = sum(val.out), .groups = "drop") %>%
+      mutate(td_loss = val.prod * TD_IO - val.prod)
+
+    # sum all electricity demands from end uses (not just end use sectors, also
+    # liquid fuel transformation)
+    elec_end_use <- simple_sources %>%
       filter(grepl("Electricity", input_L1)) %>%
       group_by(scenario, region, year, input_L1) %>%
-      summarize(value.cons = sum(value), .groups = "drop")
+      summarize(val.cons = sum(value), .groups = "drop")
 
-    # get electricity losses per technology
-    elec_loss <- in_tech %>%
-      inner_join(out_tech %>% filter(output == "electricity"),
-                 by = c("Units", "scenario", "region", "year", "sector" = "output",
-                        "subsector", "technology")) %>%
-      mutate(loss = round(value.x - value.y, 13))
 
-    # rejected energy -> T&D
+    # get technology-level losses for the electricity sector by subtracting
+    # outputs by tech from inputs by tech;
+    elec_tech_loss <- elec_inputs %>%
+      full_join(elec_gen_out, by = c("scenario", "sector", "region", "year",
+                                      "subsector", "technology")) %>%
+      mutate(val.in = if_else(subsector == "hydro" | sector == "industrial energy use",
+                              val.out, val.in),
+             tech_loss = val.in - val.out,
+             # this method gives some small negatives for wind and solar in
+             # some regions. For now, zero those out.
+             tech_loss = if_else(tech_loss < 0, 0, tech_loss),
+             target = "Losses",
+             source_color = unname(COLORMAP[target]),
+             target_color = unname(COLORMAP[target]))
 
-    elec_bal <- elec_inputs %>%
-      select(-output_L1) %>%
-      full_join(elec_demands, by = c("scenario", "region", "year")) %>%
 
-      # need to deal with loss first
-      mutate(export = pmax(value.prod - value.cons, 0),
-             import = pmax(value.cons - value.prod, 0)) %>%
-      select(-value.prod, -value.cons)
+    # TODO: create a downstream flow next to losses saying industrial cogen for now
+    #   - we can discuss how to deal with it properly when we meet
+    elec_bal <- elec_end_use %>%
+      full_join(elec_gen_out_tot, by = c("scenario", "region", "year")) %>%
+      mutate(export = pmax(val.prod - (val.cons + td_loss), 0),
+             import = pmax((val.cons + td_loss) - val.prod, 0)) %>%
+      select(-val.prod, -val.cons) %>%
+      # delaware coal is in inputs by tech but not outputs by tech
+      # zero for now but need to understand why
+      replace(., is.na(.), 0)
+
+    td_losses <- elec_gen_out_tot %>%
+      select(scenario, region, year, value = td_loss) %>%
+      mutate(source = "Electricity",
+             target = "Losses",
+             source_color = unname(COLORMAP[target]),
+             target_color = unname(COLORMAP[target]))
+
+    elec_losses_l1 <- elec_tech_loss %>%
+      group_by(scenario, region, year, input_L2,
+               target, source_color, target_color) %>%
+      summarize(value = sum(tech_loss), .groups = "drop") %>%
+      mutate(level = 1) %>%
+      rename(source = input_L2)
+
+    elec_losses_long <- elec_losses_l1 %>%
+      rbind(elec_losses_l1 %>% mutate(level = 2),
+            elec_tech_loss %>%
+              select(scenario, region, year, source = input_L3, target,
+                     source_color, target_color, value = tech_loss) %>%
+              mutate(level = 3),
+            elec_tech_loss %>%
+              select(scenario, region, year, source = input_L3, target,
+                     source_color, target_color, value = tech_loss) %>%
+              mutate(level = 4),
+            td_losses %>% mutate(level = 1),
+            td_losses %>% mutate(level = 2),
+            td_losses %>% mutate(level = 3),
+            td_losses %>% mutate(level = 4))
+
+    ## C. Hydrogen ----
+    hydrogen_cons <- simple_sources %>%
+      filter(input_L1 == "Hydrogen") %>%
+      group_by(scenario, region, year, input_L1) %>%
+      summarize(val.cons = sum(value), .groups = "drop") %>%
+      mutate(total = sum(val.cons),
+             share = val.cons/total)
+
+    hydrogen_prod <- usa_only_in %>%
+      filter(grepl("H2.*production", sector)) %>%
+      select(-region) %>%
+      group_by(scenario, year, input_L1) %>%
+      summarize(val.prod = sum(value), .groups = "drop") %>%
+      left_join(hydrogen_cons %>% select(scenario, region, year, share, target = input_L1), by = c("scenario", "year")) %>%
+      mutate(value = val.prod * share,
+             source_color = unname(COLORMAP[source]),
+             target_color = unname(COLORMAP[target])) %>%
+      select(scenario, region, year, source = input_L1, target, value, source_color, target_color)
+
+    hydrogen_loss <- hydrogen_prod %>%
+      group_by(scenario, year) %>%
+      summarize(val.prod = sum(value), .groups = "drop") %>%
+      left_join(hydrogen_cons %>% select(scenario, region, year, val.cons), by = c("scenario", "year")) %>%
+      mutate(total_cons = sum(val.cons),
+             total_loss = val.prod - total_cons,
+             share = val.cons / total_cons,
+             value = share * total_loss,
+             source = "Hydrogen",
+             target = "Losses",
+             source_color = unname(COLORMAP[target]),
+             target_color = unname(COLORMAP[target])) %>%
+      select(scenario, region, year, source, target, value, source_color, target_color)
 
   }
 
   { ## C. Trade Balancing ----
     energy_tradebal <- primary_en_tradebal %>%
-      rbind(refined_trade %>% rename(source = input_L1))
+      rbind(refined_trade %>% rename(source = input_L1),
+            elec_bal %>% rename(source = input_L1) %>% select(-td_loss))
 
     en_imports_long <- energy_tradebal %>%
       select(scenario, region, year, target = source, value = import) %>%
       filter(value > 0) %>%
-      mutate(source = paste("Traded", target))
+      mutate(source = paste("Net Imported", target),
+             target = if_else(target == "Uranium", "Nuclear", target))
 
     en_exports_long <- energy_tradebal %>%
       select(scenario, region, year, source, value = export) %>%
       filter(value > 0) %>%
-      mutate(target = paste("Traded", source))
+      mutate(target = paste("Net Exported", source),
+             source = if_else(source == "Uranium", "Nuclear", source))
 
     en_tradebal <- rbind(en_imports_long, en_exports_long) %>%
       mutate(source_color = coalesce(unname(COLORMAP[source]), unname(COLORMAP[target])),
@@ -335,11 +530,10 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
   # fine: input_L0 -> input_L1 -> input_L3 (colored by input_L2) -> output_L1 -> output_L2 -> output_L3
   # finer: input_L0 -> input_L1 -> input_L3 (colored by input_L2) -> output_L1 -> output_L2 -> output_L3 -> output_L4
   {
+    source("./R/0_functions.R")
     for_display <- simple_sources %>%
       mutate(source_color = COLORMAP[input_L1],
              target_color = COLORMAP[output_L1])
-
-    DISPLAY_LEVEL = 2  # TODO: remove after testing
 
     # TODO: refactor as function ?
     # coarsest detail
@@ -353,9 +547,14 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
       mutate(level = 1) %>%
       filter(output_L1 == "Electricity") %>%
       select(all_of(KEEP_NAMES))
-    in2_out1_elec <- for_display %>%
-      rename(source = input_L2, target = output_L1) %>%
-      mutate(level = 1) %>%
+    # if losses are kept on the technology level then need to remove input EJ
+    # to electricity node to avoid double counting
+    in2_out1_elec <- elec_gen_out %>%
+      rename(source = input_L2, target = output_L1, value = val.out) %>%
+      mutate(level = 1,
+             source_color = COLORMAP[input_L1],
+             target_color = COLORMAP[target]) %>%
+      # TODO: cogeneration elec generation is categorized as Industry on the first level
       filter(target == "Electricity") %>%
       select(all_of(KEEP_NAMES))
 
@@ -364,43 +563,75 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
       mutate(target = if_else(target %in% REFINING_TYPE, "Liquid Fuels", target))
 
     # medium detail beyond just electricity
+    # TODO: keep same node for things like transport but disagg colors for road/rail/ship etc??
     in1_in2 <- for_display %>%
       rename(source = input_L1, target = input_L2) %>%
       mutate(level = 2) %>%
-      select(all_of(KEEP_NAMES))
-    in2_out1 <- for_display %>%
-      rename(source = input_L2, target = output_L1) %>%
-      mutate(level = 2) %>%
+      filter(output_L1 != "Electricity") %>%
       select(all_of(KEEP_NAMES))
     in2_out2 <- for_display %>%
       rename(source = input_L2, target = output_L2) %>%
       mutate(level = 2) %>%
+      # feed to elec gen technologies require modified balance
+      filter(output_L1 != "Electricity") %>%
       select(all_of(KEEP_NAMES))
-    out1_out2 <- for_display %>%
-      rename(source = output_L1, target = output_L2) %>%
-      mutate(level = 2) %>%
+    in2_out2_elec <- elec_gen_out %>%
+      rename(source = input_L2, target = output_L2, value = val.out) %>%
+      mutate(level = 1,
+             source_color = COLORMAP[input_L1],
+             target_color = COLORMAP[output_L1]) %>%
+      # TODO: cogeneration elec generation is categorized as Industry on the first level
+      filter(target == "Electricity") %>%
       select(all_of(KEEP_NAMES))
 
-    l2_long <- rbind(in1_in2, in2_out2)
+    l2_long <- rbind(in1_in2,
+                     in1_in2_elec %>% mutate(level = 2),
+                     in2_out2,
+                     in2_out1_elec %>% mutate(level = 2))
 
 
     # filter level 3
     in1_in3 <- for_display %>%
-      rename(source = input_L1, target = output_L3) %>%
+      rename(source = input_L1, target = input_L3) %>%
+      mutate(level = 3) %>%
+      filter(output_L1 != "Electricity") %>%
+      select(all_of(KEEP_NAMES))
+    in1_in3_elec <- for_display %>%
+      rename(source = input_L1, target = input_L3) %>%
+      mutate(level = 3) %>%
+      filter(output_L1 == "Electricity") %>%
+      select(all_of(KEEP_NAMES))
+    # in3_out1 <- for_display %>%
+    #   rename(source = input_L3, target = output_L1) %>%
+    #   mutate(level = 3) %>%
+    #   select(all_of(KEEP_NAMES))
+    # # out1_out2 in this flow as well
+    out1_out2_lvl3 <- for_display %>%
+      rename(source = output_L1, target = output_L2) %>%
       mutate(level = 3) %>%
       select(all_of(KEEP_NAMES))
     in3_out1 <- for_display %>%
       rename(source = input_L3, target = output_L1) %>%
       mutate(level = 3) %>%
+      # feed to elec gen technologies require modified balance
+      filter(target != "Electricity") %>%
       select(all_of(KEEP_NAMES))
-    # out1_out2 in this flow as well
-    out1_out2_lvl3 <- out1_out2 %>% mutate(level = 3)
+    in3_out1_elec <- elec_gen_out %>%
+      rename(source = input_L3, target = output_L1, value = val.out) %>%
+      mutate(level = 3,
+             source_color = COLORMAP[input_L1],
+             target_color = COLORMAP[target]) %>%
+      # TODO: cogeneration elec generation is categorized as Industry on the first level
+      filter(target == "Electricity") %>%
+      select(all_of(KEEP_NAMES))
     out2_out3 <- for_display %>%
       rename(source = output_L2, target = output_L3) %>%
       mutate(level = 3) %>%
       select(all_of(KEEP_NAMES))
 
-    l3_long <- rbind(in1_in3, in3_out1, out1_out2_lvl3, out2_out3)
+    l3_long <- rbind(in1_in3, in1_in3_elec,
+                     in3_out1, in3_out1_elec,
+                     out1_out2_lvl3)
 
     # highly detailed end use to level 4
     out3_out4 <- for_display %>%
@@ -416,10 +647,27 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
                                   state_fossil_rsrc %>% mutate(level = 3)) %>%
       mutate(source_color = unname(COLORMAP[target]), target_color = source_color)
 
+    hydrogen_prod_long <- rbind(hydrogen_prod %>% mutate(level = 1),
+                                hydrogen_prod %>% mutate(level = 2),
+                                hydrogen_prod %>% mutate(level = 3),
+                                hydrogen_prod %>% mutate(level = 4))
+
+    hydrogen_loss_long <- rbind(hydrogen_loss %>% mutate(level = 1),
+                                hydrogen_loss %>% mutate(level = 2),
+                                hydrogen_loss %>% mutate(level = 3),
+                                hydrogen_loss %>% mutate(level = 4))
+
+
+    DISPLAY_LEVEL = 2  # TODO: remove after testing
+
     # if at a low resolution display level this will have repeats that need
     # summing by group
     combo_grp <- rbind(l1_long, l2_long, l3_long,
-                       primary_en_prod_long, refining_loss_long) %>%
+                       primary_en_prod_long,
+                       hydrogen_prod_long,
+                       refining_loss_long,
+                       elec_losses_long,
+                       hydrogen_loss_long) %>%
       filter(source != target, level == DISPLAY_LEVEL) %>%
       select(-level) %>%
       # then add net energy trade because it is independent of display level
@@ -429,25 +677,18 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
       # biomass and NG colors because they are inputs and want to only color by
       # the primary input)
       mutate(target_color = if_else(target %in% REFINING_TYPE,
-                                    COLORMAP["Liquid Fuels"], target_color),
+                                    COLORMAP[source], target_color),
              source_color = if_else(source %in% REFINING_TYPE & target != "Losses",
                                     COLORMAP[source], source_color),
-             source_color = if_else(target %in% REFINING_TYPE,
+             source_color = if_else(source %in% REFINING_TYPE,
                                     COLORMAP[target], source_color)) %>%
       group_by(scenario, region, year, source, target, source_color, target_color) %>%
       summarize(value = sum(value), .groups = "drop")
 
-    # TODO: north dakota is broken between refining and liquid fuels for L1
-    plot_sankey(combo_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"), reg = "TX", yr = 2025)
-
-    # TODO: natural gas to refining is the wrong color in L2 (refining instead of NG)
     # TODO: L3 has wrong colors and doesn't stack refining techs properly
-    # TODO: condense the labels for the electricity techs
-    # on select just highlight the path you've selected?
-    # make hover over more useful
-    # pin the x axis for stuff like refining and biorefining so they align;
-    #     does it make sense to have like a primary, transformation, end use bar at the bottom?
-    # do a toggle color scheme
+    plot_sankey(combo_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"), reg = "WA", yr = 2025)
+
+
     # update documentation, make choices clear
     # what does this type of visualization help convey more easily between state EWN?
     # merge with water stuff
@@ -455,21 +696,35 @@ if (FALSE) { ##. remake fossil resource mapping, set to not do it
     # is there a better package for styling?
     # be able to highlight net import / export for diff energy sources?
 
+    # NOT STARTED
+    # TODO: separate levels for energy sources and end uses so users can expand either side independently
+    # TODO: condense the labels for the electricity techs
+    # TODO: group L3/4 by cooling tech or by energy tech?
+    # TODO: should subsectors be separate nodes or have slightly different colors (how to do programmatically?)
+    # TODO: give the option to group multiple states (e.g. look at new england, pnw, southeast etc)
+    #        and maybe show the percent of a highlight state compared to the neighborhood? like on hover
+    #        over highlight just that state's contributions?
 
     # IN PROGRESS
-    # TODO: uranium extraction ->  asked MB
-    # TODO: electricity!!! i can't find transmission losses in constants.R
+    # TODO: L3 has wrong colors and doesn't stack refining techs properly
 
     # STYLING
-    # TODO: add horizontal alignment flags
+    # TODO: color end use details by the main end use category
+    # TODO: bundle exports vertically? like losses, exports, in-state energy consumption, water
+    #          also want them to align with secondary prod and not end use consumption?
     # TODO: adjust labels to include value and units
     # TODO: figure out how to fix some of the weird auto y position ordering
     # TODO: add color legend
     # TODO: have a colormap toggle for different levels of detail
-    #        - right now
+    #        - right now (but should liquid fuels be the same color as oil? just have a fossil color?)
     #        - fossil vs renewable + end use same nodes
     #        - same as im3 dash (orange for all non electricity, yellow elec, gray losses)
     # TODO: have some kind of on click persistent highlight + better tooltip
+    # TODO: on select just highlight the path you've selected?
+    # TODO: make hover over more useful
+    # TODO: pin the x axis for stuff like refining and biorefining so they align;
+    #         does it make sense to have like a primary, transformation, end use bar at the bottom?
+    
   }
 }
 
