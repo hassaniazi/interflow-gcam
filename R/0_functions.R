@@ -285,31 +285,38 @@ query_im3_scen <- function(name = "", constance_node = "constance03", user = "ni
 COLORMAP <- c(
   # supply colors depend on primary resource
   "Nuclear"         = "#884488",
+  "Uranium"         = "#884488",
   "Wind"            = "#BDBDBD",
-  "Solar"           = "#EDFF8A",
+  "Solar"           = "#ffe28a",
   "Geothermal"      = "#FF6600",
   "Biomass"         = "#117733",
   "Hydrogen"        = "#00A7A7",
   "Hydropower"      = "#0072B2",
-  "Coal"            = "#2C2C2C",
+  "Coal"            = "#362312",  # TODO: make more separate from losses color
   "Oil"             = "#8d4e28",
   "Natural Gas"     = "#87CEEB",
 
   # secondary processes
   "Biorefining"     = "#117733",
   "Oil Refining"    = "#8d4e28",
-  "Coal to Liquids" = "#2C2C2C",
+  "Coal to Liquids" = "#362312",
   "Gas to Liquids"  = "#87CEEB",
 
   # secondary fuels
   "Electricity"     = "#F0E442",
   "Liquid Fuels"    = "#D55E00",
-  "Losses"          = "#444444",
+  "Losses"          = "#222021",
 
   # demand colors depend on L1 sectors
   "Buildings"       = "#4E79A7",
   "Industry"        = "#CC6677",
-  "Transport"       = "#A6D854"
+  "Transport"       = "#A6D854"#,
+
+  # cooling technologies
+ # "Dry Cooling"     = "",
+#  "Recirculating"   = "",
+
+
 )
 COLOR_LEVELS <- names(COLORMAP)
 
