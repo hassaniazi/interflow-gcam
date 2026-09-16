@@ -3,8 +3,6 @@
 # Authors: Maggie Liu, Hassan Niazi
 # Feb 2026
 
-# TODO: either get used to ctrl+alt+t for chunking or remove brace lintr
-
 library("visNetwork")
 
 # 0. Setup ----------------------------------------------------------------
@@ -42,9 +40,6 @@ DB_PATH        <- 'data'
 PROJ           <- "data\\im3scen_energy.dat"
 QUERIES        <- 'data\\queries_ewflows.xml'
 
-# TODO: ultimately want to load a pre-processed file that only requires filtering
-#       unless the reload toggle is switched on
-
 ## . get db ----
 if (UPDATE_DATA) {                           # run new queries, or
   conn <- localDBConn(DB_PATH, DB_NAME)
@@ -60,7 +55,6 @@ if (UPDATE_DATA) {                           # run new queries, or
 }
 
 { ## . get mappings ----
-  # TODO: should this just be in 0_functions as a preload?
   inputs_map       <- read_csv(paste0(data_dir, "./mappings/inputs_tech_mapping.csv"))
   fossil_prod      <- read_csv(paste0(data_dir, "/GCAMUSA_fossil_resource_production.csv"))
   seds_2024        <- read_csv(paste0(data_dir, "/seds_2024.csv"))
@@ -74,7 +68,7 @@ if (FALSE) {
   # resource production by tech and vintage
   fossil_vint <- read_csv(paste0(data_dir, "ref_res_prod_by_tech_vin.csv"), skip = 1)
   fossil_prod <- fossil_vint %>%
-    # "PV_resource", "CSP_resource", "distributed_solar"  also included by state
+    # "PV_resource", "CSP_resource", "distributed_solar" also included by state
     # in this query. it might be helpful to save them in the future, especially
     # if more renewables added
     filter(resource %in% c("coal", "crude oil", "natural gas")) %>%
@@ -106,18 +100,10 @@ if (FALSE) {
 { ## . extract from queries ----
   in_by_tech      <- getQuery(prj, "USA inputs by tech")
   out_by_tech     <- getQuery(prj, "USA outputs by tech")
-  # TODO: query resource production, where there's a USA region is potential for downscaling
   resource_prod   <- getQuery(prj, "resource production")
 }
 
-# for hydropower: HOW DID I BREAK THIS WHERE DID IT GO; there's EJ hydro in outputs by tech, compare with seds??
-# for hydrogen:
-# for biomass:
-# for corn for etoh:
-
 # 2. Extract energy and water flows ---------------------------------------
-# TODO: may need to separate location filter part of pipeline
-# TODO: should superpeak/base really be collapsed here? or removed?
 {
   ## . clean up fields ----
   in_tech <- in_by_tech %>%
@@ -265,8 +251,8 @@ if (FALSE) {
     uranium_cons <- simple_sources %>%
       # thermal splitting for H2 production not on the state level in this GCAM
       # version so have to add back in the USA region before filtering inputs
-      # TODO: can't yet though because don't have the connection in the H2 sector rn!
-      #rbind(usa_only) %>%
+      # TODO: add in hydrogen production here??
+      rbind(usa_only_in) %>%
       filter(grepl("nuclear", input)) %>%
       group_by(scenario, region, year, source = input_L1) %>%
       summarize(value.cons = sum(value), .groups = "drop") %>%
@@ -409,7 +395,6 @@ if (FALSE) {
       group_by(scenario, region, year, input_L1) %>%
       summarize(val.cons = sum(value), .groups = "drop")
 
-
     # get technology-level losses for the electricity sector by subtracting
     # outputs by tech from inputs by tech;
     elec_tech_loss <- elec_inputs %>%
@@ -425,9 +410,11 @@ if (FALSE) {
              source_color = unname(COLORMAP[target]),
              target_color = unname(COLORMAP[target]))
 
-
     # TODO: create a downstream flow next to losses saying industrial cogen for now
     #   - we can discuss how to deal with it properly when we meet
+    # take another look at the elec bal node (does cogen go to the elec market?? all consumed on site??)
+    # have the cogen downstream node, add to rejected energy->loss split
+
     elec_bal <- elec_end_use %>%
       full_join(elec_gen_out_tot, by = c("scenario", "region", "year")) %>%
       mutate(export = pmax(val.prod - (val.cons + td_loss), 0),
@@ -481,7 +468,7 @@ if (FALSE) {
       summarize(val.prod = sum(value), .groups = "drop") %>%
       left_join(hydrogen_cons %>% select(scenario, region, year, share, target = input_L1), by = c("scenario", "year")) %>%
       mutate(value = val.prod * share,
-             source_color = unname(COLORMAP[source]),
+             source_color = unname(COLORMAP[input_L1]),
              target_color = unname(COLORMAP[target])) %>%
       select(scenario, region, year, source = input_L1, target, value, source_color, target_color)
 
@@ -563,7 +550,6 @@ if (FALSE) {
       mutate(target = if_else(target %in% REFINING_TYPE, "Liquid Fuels", target))
 
     # medium detail beyond just electricity
-    # TODO: keep same node for things like transport but disagg colors for road/rail/ship etc??
     in1_in2 <- for_display %>%
       rename(source = input_L1, target = input_L2) %>%
       mutate(level = 2) %>%
@@ -601,11 +587,6 @@ if (FALSE) {
       mutate(level = 3) %>%
       filter(output_L1 == "Electricity") %>%
       select(all_of(KEEP_NAMES))
-    # in3_out1 <- for_display %>%
-    #   rename(source = input_L3, target = output_L1) %>%
-    #   mutate(level = 3) %>%
-    #   select(all_of(KEEP_NAMES))
-    # # out1_out2 in this flow as well
     out1_out2_lvl3 <- for_display %>%
       rename(source = output_L1, target = output_L2) %>%
       mutate(level = 3) %>%
@@ -658,7 +639,7 @@ if (FALSE) {
                                 hydrogen_loss %>% mutate(level = 4))
 
 
-    DISPLAY_LEVEL = 2  # TODO: remove after testing
+    DISPLAY_LEVEL = 3  # TODO: remove after testing
 
     # if at a low resolution display level this will have repeats that need
     # summing by group
@@ -685,28 +666,34 @@ if (FALSE) {
       group_by(scenario, region, year, source, target, source_color, target_color) %>%
       summarize(value = sum(value), .groups = "drop")
 
-    # TODO: L3 has wrong colors and doesn't stack refining techs properly
-    plot_sankey(combo_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"), reg = "WA", yr = 2025)
+    plot_sankey(combo_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"), reg = "CA", yr = 2025)
 
 
-    # update documentation, make choices clear
     # what does this type of visualization help convey more easily between state EWN?
-    # merge with water stuff
     # test that other years and time progression works too
     # is there a better package for styling?
     # be able to highlight net import / export for diff energy sources?
+    # for hydropower: HOW DID I BREAK THIS WHERE DID IT GO; there's EJ hydro in outputs by tech, compare with seds??
 
     # NOT STARTED
     # TODO: separate levels for energy sources and end uses so users can expand either side independently
-    # TODO: condense the labels for the electricity techs
     # TODO: group L3/4 by cooling tech or by energy tech?
     # TODO: should subsectors be separate nodes or have slightly different colors (how to do programmatically?)
     # TODO: give the option to group multiple states (e.g. look at new england, pnw, southeast etc)
     #        and maybe show the percent of a highlight state compared to the neighborhood? like on hover
     #        over highlight just that state's contributions?
+    # TODO: merge with water sankey
+    # TODO: move mappings into 0_functions as a preload?
+    # TODO: save the processed csv and add reprocessing toggle (ensure last stage only needs to be filtering)
+    # TODO: may need to separate location filter part of pipeline
+    # TODO: should superpeak/base really be collapsed at top of part 2? or removed?
 
     # IN PROGRESS
-    # TODO: L3 has wrong colors and doesn't stack refining techs properly
+    # TODO: do we want to always show the cogeneration loop, or pull it into other electricity inputs?
+    # TODO: condense the labels for the electricity techs
+    # TODO: keep same node for things like transport but disagg colors for road/rail/ship etc??
+    # TODO: display by tech or by cooling type on higher levels? what is most compact but still communicative?
+    # TODO: DOCUMENTATION, make choices clear
 
     # STYLING
     # TODO: color end use details by the main end use category
@@ -724,12 +711,9 @@ if (FALSE) {
     # TODO: make hover over more useful
     # TODO: pin the x axis for stuff like refining and biorefining so they align;
     #         does it make sense to have like a primary, transformation, end use bar at the bottom?
-    
+
   }
 }
-
-
-# 5. Plot -----------------------------------------------------------------
 
 
 ########################### Archive #################################
