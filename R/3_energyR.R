@@ -4,6 +4,7 @@
 # Feb 2026
 
 library("visNetwork")
+library("arrow")
 
 # 0. Setup ----------------------------------------------------------------
 source("./R/0_functions.R")
@@ -11,11 +12,11 @@ source("./R/0_functions.R")
 # User choices
 UPDATE_DATA    <- FALSE
 PLOTS_ON       <- TRUE
-SCENARIO       <- "rcp45cooler_ssp3"
-FILTER_YEARS   <- 2025
+SCENARIO       <- "rcp45hotter_ssp5"
+FILTER_YEARS   <- 2055
 DISPLAY_LEVEL  <- 2   # int, 1-4 currently; lower value = less detail
 COLOR_LEVEL    <- "DETAILED"
-
+FUTURE_YEARS   <- 2020:2100
 
 # Primary fuels
 RENEWABLES     <- c("Nuclear", "Wind", "Solar", "Biomass", "Hydrogen", "Hydropower", "Geothermal")
@@ -26,6 +27,7 @@ FOSSIL_MAPPING <- c("coal", "crude oil", "unconventional oil", "natural gas")
 SECONDARY_EN   <- c("Electricity", "Liquid Fuels")
 REFINING_TYPE  <- c("Oil Refining", "Biorefining", "Coal to Liquids", "Gas to Liquids")
 ELEC_LOADTYPE  <- c("superpeak", "subpeak", "peak", "baseload", "intermediate")
+# TODO: bring a file, left join for all regions possible in future
 TD_IO          <- 1.06237346267644    # 2021 USA I:O value for L126.IO_R_electd_F_Yh
 
 # End use
@@ -35,9 +37,9 @@ KEEP_NAMES     <- c("scenario", "region", "year", "source", "target", "value",
 
 # 1. Load data ------------------------------------------------------------
 options(scipen = 999)
-DB_NAME        <- 'database_rcp45cooler_ssp3'
+DB_NAME        <- 'database_rcp85hotter_ssp5'
 DB_PATH        <- 'data'
-PROJ           <- "data\\im3scen_energy.dat"
+PROJ           <- "data\\im3scen_energy1.dat"
 QUERIES        <- 'data\\queries_ewflows.xml'
 
 ## . get db ----
@@ -60,6 +62,7 @@ if (UPDATE_DATA) {                           # run new queries, or
   seds_2024        <- read_csv(paste0(data_dir, "/seds_2024.csv"))
   uranium_2025     <- read_csv(paste0(data_dir, "/qupd_tbl1_uranium_quarterly_25.csv"), skip = 7)
   uranium_purchase <- read_csv(paste0(data_dir, "/umartableS1afigureS1.csv"), skip = 7)
+  uranium_sources  <- read_csv(paste0(data_dir, "/uranium_sources.csv"))
 }
 
 ##. remake fossil resource mapping, default has this turned off and instead
@@ -95,6 +98,33 @@ if (FALSE) {
     select(region = StateCode, year = Year, description = Description, value)
   write_csv(seds_2024, paste0(data_dir, "/seds_2024.csv"))
 
+  # downscale uranium for nuclear as it is not on the state level in IM3 GCAMUSA
+  # data is from EIA Domestic Uranium Production Quarterly Report, Table 1
+  # from the Q1 2026 report and represents uranium concentrate production in lbs
+  state_uranium <- uranium_2025 %>%
+    pivot_longer(names_to = "year", values_to = "value", cols = -c(Facility, Location, State)) %>%
+    filter(!is.na(Location), grepl("2025", year)) %>%
+    group_by(region = State) %>%
+    summarize(value = sum(value, na.rm = TRUE), .groups = "drop") %>%
+    mutate(resource = "uranium", share_us_prod = value / sum(value))
+
+  # according to EIA Uranium Marketing Annual Report Table S1a, the US purchased
+  # a total of 46.9 million lbs U3O8 equivalent in 2025. the U.S.-origin value
+  # doesn't match the quarterly report figures, possibly because of country of
+  # origin changing mid-supply chain (e.g. mined elsewhere and enriched in the US)
+  uranium_sources <- uranium_purchase %>%
+    select(year = `Delivery year`, total = `Total purchased`, us_origin = `U.S.-origin uranium`) %>%
+    filter(us_origin != "W", year %in% 2025) %>%  # data set ends at 2025
+    mutate(resource = "uranium") %>%
+    left_join(state_uranium, by = "resource") %>%
+    mutate(total =  as.numeric(total),
+           us_origin = as.numeric(us_origin),
+           value.mmlb = us_origin * share_us_prod,
+           non_us = total - us_origin,
+           frac_state = value.mmlb / (us_origin + non_us)) %>%
+    select(region, year, value.mmlb, us_origin, non_us, frac_state)
+  write_csv(uranium_sources, paste0(data_dir, "/uranium_sources.csv"))
+
 }
 
 { ## . extract from queries ----
@@ -108,7 +138,7 @@ if (FALSE) {
   ## . clean up fields ----
   in_tech <- in_by_tech %>%
     # filter to US regions and selected time range
-    gather_year_filt(year_filt = FILTER_YEARS) %>%
+    gather_years() %>%
     filter_USregions() %>%
     extract_state() %>%
     mutate(# fix incorrect units to allow filtering by EJ next
@@ -118,7 +148,7 @@ if (FALSE) {
         input == "industrial processes" ~ NA,
         TRUE ~ Units),
       scenario = factor(scenario)) %>%
-    filter(Units %in% c("EJ") | input %in% c("uranium"), scenario %in% SCENARIO,
+    filter(Units %in% c("EJ") | input %in% c("uranium"), year %in% FUTURE_YEARS,
       # remove intl trade volumes (e.g. Africa_Eastern traded biomass)
       !grepl(paste(c("USA", nonUSregions), collapse = "|"), subsector),
       # remove irrelevant inputs
@@ -140,13 +170,12 @@ if (FALSE) {
     summarize(value = sum(value), .groups = "drop") %>%
     replace(., . == "", NA)   # convert blanks saved as "" to proper NAs
 
-
   out_tech <- out_by_tech %>%
     # filter to US regions and selected time range
-    gather_year_filt(year_filt = FILTER_YEARS) %>%
+    gather_years() %>%
     filter_USregions() %>%
     extract_state() %>%
-    filter(Units %in% c("EJ"), scenario %in% SCENARIO) %>%
+    filter(Units %in% c("EJ"), year %in% FUTURE_YEARS) %>%
     # RFD is rainfed and IRR is irrigated crops > should be summed
     # hi/lo appliance and high/low fert efficiency for crop yields summed here
     remove_hi_lo() %>%
@@ -168,7 +197,7 @@ if (FALSE) {
   # resource production broken out by state
   state_fossil_prod <- fossil_prod %>%
     select(-scenario) %>%
-    filter(year %in% FILTER_YEARS) %>%
+    filter(year %in% FUTURE_YEARS) %>%
     filter_USregions() %>%
     mutate(resource = if_else(grepl("unconventional", subresource) & resource == "crude oil",
                               "unconventional oil", resource))
@@ -177,7 +206,7 @@ if (FALSE) {
   # resource production by USA total. Use shares from CMP429 to apportion the
   # IM3 total to the states
   state_fossil_rsrc <- resource_prod %>%
-    filter(Units == "EJ", year %in% FILTER_YEARS, resource %in% FOSSIL_MAPPING) %>%
+    filter(Units == "EJ", year %in% FUTURE_YEARS, resource %in% FOSSIL_MAPPING) %>%
     filter_USregions() %>%
     rename(us_total = value) %>%
     left_join(state_fossil_prod, by = c("year", "resource")) %>%
@@ -189,31 +218,6 @@ if (FALSE) {
     ungroup() %>%
     select(scenario, region = region.y, source = subresource, target = resource,
            year, value = cal_rsrc)
-
-  # downscale uranium for nuclear as it is not on the state level in IM3 GCAMUSA
-  # data is from EIA Domestic Uranium Production Quarterly Report, Table 1
-  # from the Q1 2026 report and represents uranium concentrate production in lbs
-  state_uranium <- uranium_2025 %>%
-    pivot_longer(names_to = "year", values_to = "value", cols = -c(Facility, Location, State)) %>%
-    filter(!is.na(Location), grepl("2025", year)) %>%
-    group_by(region = State) %>%
-    summarize(value = sum(value, na.rm = TRUE), .groups = "drop") %>%
-    mutate(resource = "uranium", share_us_prod = value / sum(value))
-
-  # according to EIA Uranium Marketing Annual Report Table S1a, the US purchased
-  # a total of 46.9 million lbs U3O8 equivalent in 2025. the U.S.-origin value
-  # doesn't match the quarterly report figures, possibly because of country of
-  # origin changing mid-supply chain (e.g. mined elsewhere and enriched in the US)
-  uranium_sources <- uranium_purchase %>%
-    select(year = `Delivery year`, total = `Total purchased`, us_origin = `U.S.-origin uranium`) %>%
-    filter(us_origin != "W", year %in% FILTER_YEARS) %>%
-    mutate(resource = "uranium") %>%
-    left_join(state_uranium, by = "resource") %>%
-    mutate(total =  as.numeric(total),
-           us_origin = as.numeric(us_origin),
-           value.mmlb = us_origin * share_us_prod,
-           non_us = total - us_origin) %>%
-    select(region, year, value.mmlb, us_origin, non_us)
 
 
 # 4. Process primary and secondary energy ---------------------------------
@@ -272,13 +276,11 @@ if (FALSE) {
       distinct()
 
     uranium_prod <- uranium_sources %>%
-      select(-us_origin, -non_us) %>%
-      rbind(uranium_imports) %>%
-      mutate(share = value.mmlb / sum(value.mmlb), year = as.integer(year)) %>%
-      # don't need non-us origin line item after shares calculated
-      filter(region != "USA") %>%
-      left_join(uranium_cons, by = c("region", "year")) %>%
-      mutate(value.prod = sum(value.cons) * share) %>%
+      select(region, frac_state) %>%
+      # use 2025 state production fractions for all future years; update if new
+      # data become available
+      left_join(uranium_cons, by = "region") %>%
+      mutate(value.prod = sum(value.cons) * frac_state) %>%
       select(scenario, region, year, source, value.prod)
 
     primary_en_cons <- simple_sources %>%
@@ -411,10 +413,7 @@ if (FALSE) {
              target_color = unname(COLORMAP[target]))
 
     # TODO: create a downstream flow next to losses saying industrial cogen for now
-    #   - we can discuss how to deal with it properly when we meet
-    # take another look at the elec bal node (does cogen go to the elec market?? all consumed on site??)
     # have the cogen downstream node, add to rejected energy->loss split
-
     elec_bal <- elec_end_use %>%
       full_join(elec_gen_out_tot, by = c("scenario", "region", "year")) %>%
       mutate(export = pmax(val.prod - (val.cons + td_loss), 0),
@@ -429,7 +428,8 @@ if (FALSE) {
       mutate(source = "Electricity",
              target = "Losses",
              source_color = unname(COLORMAP[target]),
-             target_color = unname(COLORMAP[target]))
+             target_color = unname(COLORMAP[target]),
+             level = 0)
 
     elec_losses_l1 <- elec_tech_loss %>%
       group_by(scenario, region, year, input_L2,
@@ -444,14 +444,7 @@ if (FALSE) {
               select(scenario, region, year, source = input_L3, target,
                      source_color, target_color, value = tech_loss) %>%
               mutate(level = 3),
-            elec_tech_loss %>%
-              select(scenario, region, year, source = input_L3, target,
-                     source_color, target_color, value = tech_loss) %>%
-              mutate(level = 4),
-            td_losses %>% mutate(level = 1),
-            td_losses %>% mutate(level = 2),
-            td_losses %>% mutate(level = 3),
-            td_losses %>% mutate(level = 4))
+            td_losses)
 
     ## C. Hydrogen ----
     hydrogen_cons <- simple_sources %>%
@@ -507,7 +500,8 @@ if (FALSE) {
 
     en_tradebal <- rbind(en_imports_long, en_exports_long) %>%
       mutate(source_color = coalesce(unname(COLORMAP[source]), unname(COLORMAP[target])),
-             target_color = source_color)
+             target_color = source_color,
+             level = 0)
   }
 
 
@@ -515,9 +509,8 @@ if (FALSE) {
   # coarse: input_L1 -> output_L1
   # medium: input_L1 -> input_L2 -> output_L1 -> output_L2
   # fine: input_L0 -> input_L1 -> input_L3 (colored by input_L2) -> output_L1 -> output_L2 -> output_L3
-  # finer: input_L0 -> input_L1 -> input_L3 (colored by input_L2) -> output_L1 -> output_L2 -> output_L3 -> output_L4
   {
-    source("./R/0_functions.R")
+    source("./R/0_functions.R")      # TODO: remove after testing
     for_display <- simple_sources %>%
       mutate(source_color = COLORMAP[input_L1],
              target_color = COLORMAP[output_L1])
@@ -575,7 +568,6 @@ if (FALSE) {
                      in2_out2,
                      in2_out1_elec %>% mutate(level = 2))
 
-
     # filter level 3
     in1_in3 <- for_display %>%
       rename(source = input_L1, target = input_L3) %>%
@@ -614,46 +606,29 @@ if (FALSE) {
                      in3_out1, in3_out1_elec,
                      out1_out2_lvl3)
 
-    # highly detailed end use to level 4
-    out3_out4 <- for_display %>%
-      rename(source = output_L3, target = output_L4) %>%
-      mutate(level = 4) %>%
-      select(all_of(KEEP_NAMES))
-
-    l4_long <- rbind(l3_long %>% mutate(level = 4), out3_out4)
-
 
     primary_en_prod_long <- rbind(primary_prod_clean %>% mutate(level = 1),
                                   primary_prod_clean %>% mutate(level = 2),
                                   state_fossil_rsrc %>% mutate(level = 3)) %>%
       mutate(source_color = unname(COLORMAP[target]), target_color = source_color)
 
-    hydrogen_prod_long <- rbind(hydrogen_prod %>% mutate(level = 1),
-                                hydrogen_prod %>% mutate(level = 2),
-                                hydrogen_prod %>% mutate(level = 3),
-                                hydrogen_prod %>% mutate(level = 4))
-
-    hydrogen_loss_long <- rbind(hydrogen_loss %>% mutate(level = 1),
-                                hydrogen_loss %>% mutate(level = 2),
-                                hydrogen_loss %>% mutate(level = 3),
-                                hydrogen_loss %>% mutate(level = 4))
+    # give level = 0 to all sectors
+    hydrogen_prod_long <- hydrogen_prod %>% mutate(level = 0)
+    hydrogen_loss_long <- hydrogen_loss %>% mutate(level = 0)
 
 
-    DISPLAY_LEVEL = 3  # TODO: remove after testing
+    DISPLAY_LEVEL = 2  # TODO: remove after testing
 
-    # if at a low resolution display level this will have repeats that need
-    # summing by group
+    # if at a low resolution display level this will still have repeats that
+    # need summing by group
     combo_grp <- rbind(l1_long, l2_long, l3_long,
                        primary_en_prod_long,
-                       hydrogen_prod_long,
                        refining_loss_long,
-                       elec_losses_long,
-                       hydrogen_loss_long) %>%
-      filter(source != target, level == DISPLAY_LEVEL) %>%
-      select(-level) %>%
+                       elec_losses_long) %>%
       # then add net energy trade because it is independent of display level
       # due to lack of more granular data
-      rbind(en_tradebal) %>%
+      rbind(en_tradebal, hydrogen_prod_long, hydrogen_loss_long) %>%
+      filter(source != target) %>%
       # fix processing sector colors (otherwise biorefining eg has elec,
       # biomass and NG colors because they are inputs and want to only color by
       # the primary input)
@@ -662,18 +637,41 @@ if (FALSE) {
              source_color = if_else(source %in% REFINING_TYPE & target != "Losses",
                                     COLORMAP[source], source_color),
              source_color = if_else(source %in% REFINING_TYPE,
-                                    COLORMAP[target], source_color)) %>%
+                                    COLORMAP[target], source_color),
+             units = "EJ",
+             diagram = "Energy & Water") %>%  # TODO: are there any details we would only keep on an energy diagram?
+      group_by(scenario, region, year, source, target, source_color,
+               target_color, level, units, diagram) %>%
+      summarize(value = sum(value), .groups = "drop")
+
+    plot_grp <- combo_grp %>%
+      filter(scenario %in% SCENARIO, year %in% FILTER_YEARS, level %in% c(DISPLAY_LEVEL, 0)) %>%
       group_by(scenario, region, year, source, target, source_color, target_color) %>%
       summarize(value = sum(value), .groups = "drop")
 
-    plot_sankey(combo_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"), reg = "CA", yr = 2025)
 
+    # Usage: single state plotting
+    plot_sankey(plot_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"),
+                reg = "WA",
+                yr = FILTER_YEARS,
+                scen = SCENARIO,
+                animate = T)
+
+    # write processed csv to file
+    write.csv(combo_grp, "gcam_usa_energy.csv", row.names = FALSE)
+    write_parquet(combo_grp, "gcam_usa_energy.parquet")
+
+    # load from pre-processed csv
+
+
+
+    # TODO: highlight others if i don't understand them
+    # for comparison part > make some line plots, ww over time || had diff plots?
 
     # what does this type of visualization help convey more easily between state EWN?
     # test that other years and time progression works too
     # is there a better package for styling?
     # be able to highlight net import / export for diff energy sources?
-    # for hydropower: HOW DID I BREAK THIS WHERE DID IT GO; there's EJ hydro in outputs by tech, compare with seds??
 
     # NOT STARTED
     # TODO: separate levels for energy sources and end uses so users can expand either side independently
