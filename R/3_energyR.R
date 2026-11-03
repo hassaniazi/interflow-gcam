@@ -13,7 +13,7 @@ source("./R/0_functions.R")
 UPDATE_DATA    <- FALSE
 PLOTS_ON       <- TRUE
 SCENARIO       <- "rcp45hotter_ssp5"
-FILTER_YEARS   <- 2055
+FILTER_YEARS   <- 2020
 DISPLAY_LEVEL  <- 2   # int, 1-4 currently; lower value = less detail
 COLOR_LEVEL    <- "DETAILED"
 FUTURE_YEARS   <- 2020:2100
@@ -32,8 +32,6 @@ TD_IO          <- 1.06237346267644    # 2021 USA I:O value for L126.IO_R_electd_
 
 # End use
 DEMAND_SECTORS <- c("Industry", "Buildings", "Transportation")
-KEEP_NAMES     <- c("scenario", "region", "year", "source", "target", "value",
-                    "level", "source_color", "target_color")
 
 # 1. Load data ------------------------------------------------------------
 options(scipen = 999)
@@ -77,6 +75,10 @@ if (FALSE) {
     filter(resource %in% c("coal", "crude oil", "natural gas")) %>%
     select(-c(technology, Units)) %>%
     gather_years() %>%
+    # this is taken from base year 2021; all 2020 entries are empty. cast 2021
+    # to 2020 to align with IM3 scenario outputs
+    filter(year != 2020) %>%
+    mutate(year = if_else(year == 2021, 2020, year)) %>%
     group_by(scenario, region, resource, subresource, year) %>%
     summarize(value = sum(value), .groups = "drop")
   write_csv(fossil_prod, paste0(data_dir, "/GCAMUSA_fossil_resource_production.csv"))
@@ -336,12 +338,15 @@ if (FALSE) {
       mutate(losses = value.in - value.out,
              target = "Losses",
              source_color = unname(COLORMAP[target]),
-             target_color = unname(COLORMAP[target])) %>%
+             target_color = unname(COLORMAP[target]),
+             source_position = "input_L1",
+             target_position = "output_L4") %>%
       select(scenario, region, year, source = sector, target, value = losses,
-             source_color, target_color)
+             source_color, source_position, target_color, target_position)
 
     refining_loss_long <- refining_loss %>%
-      group_by(scenario, region, year, target, source_color, target_color) %>%
+      group_by(scenario, region, year, target, source_color, target_color,
+               source_position, target_position) %>%
       summarize(value = sum(value), .groups = "drop") %>%
       mutate(source = "Liquid Fuels", level = 1) %>%
       rbind(refining_loss %>% mutate(level = 2),
@@ -410,7 +415,8 @@ if (FALSE) {
              tech_loss = if_else(tech_loss < 0, 0, tech_loss),
              target = "Losses",
              source_color = unname(COLORMAP[target]),
-             target_color = unname(COLORMAP[target]))
+             target_color = unname(COLORMAP[target])) %>%
+      filter(tech_loss > 0)
 
     # TODO: create a downstream flow next to losses saying industrial cogen for now
     # have the cogen downstream node, add to rejected energy->loss split
@@ -429,13 +435,14 @@ if (FALSE) {
              target = "Losses",
              source_color = unname(COLORMAP[target]),
              target_color = unname(COLORMAP[target]),
+             source_position = "output_L1",
              level = 0)
 
     elec_losses_l1 <- elec_tech_loss %>%
-      group_by(scenario, region, year, input_L2,
-               target, source_color, target_color) %>%
+      group_by(scenario, region, year, input_L2, target, source_color, target_color) %>%
       summarize(value = sum(tech_loss), .groups = "drop") %>%
-      mutate(level = 1) %>%
+      mutate(level = 1,
+             source_position = "input_L2") %>%
       rename(source = input_L2)
 
     elec_losses_long <- elec_losses_l1 %>%
@@ -443,8 +450,9 @@ if (FALSE) {
             elec_tech_loss %>%
               select(scenario, region, year, source = input_L3, target,
                      source_color, target_color, value = tech_loss) %>%
-              mutate(level = 3),
-            td_losses)
+              mutate(level = 3, source_position = "input_L3"),
+            td_losses) %>%
+      mutate(target_position = "output_L4")
 
     ## C. Hydrogen ----
     hydrogen_cons <- simple_sources %>%
@@ -470,7 +478,8 @@ if (FALSE) {
       summarize(val.prod = sum(value), .groups = "drop") %>%
       left_join(hydrogen_cons %>% select(scenario, region, year, val.cons), by = c("scenario", "year")) %>%
       mutate(total_cons = sum(val.cons),
-             total_loss = val.prod - total_cons,
+             total_prod = sum(val.prod),
+             total_loss = total_prod - total_cons,
              share = val.cons / total_cons,
              value = share * total_loss,
              source = "Hydrogen",
@@ -501,133 +510,114 @@ if (FALSE) {
     en_tradebal <- rbind(en_imports_long, en_exports_long) %>%
       mutate(source_color = coalesce(unname(COLORMAP[source]), unname(COLORMAP[target])),
              target_color = source_color,
+             source_position = if_else(grepl("Net", source), "input_L0", "input_L1"),
+             target_position = if_else(grepl("Net", target), "input_L1", "output_L1"),
              level = 0)
   }
 
-
   # !!!!! setting up the long df ----
-  # coarse: input_L1 -> output_L1
-  # medium: input_L1 -> input_L2 -> output_L1 -> output_L2
-  # fine: input_L0 -> input_L1 -> input_L3 (colored by input_L2) -> output_L1 -> output_L2 -> output_L3
   {
     source("./R/0_functions.R")      # TODO: remove after testing
     for_display <- simple_sources %>%
       mutate(source_color = COLORMAP[input_L1],
              target_color = COLORMAP[output_L1])
 
-    # TODO: refactor as function ?
-    # coarsest detail
-    in1_out1 <- for_display %>%
-      rename(source = input_L1, target = output_L1) %>%
-      mutate(level = 1) %>%
-      filter(target != "Electricity") %>%
-      select(all_of(KEEP_NAMES)) # does not include trade/loss/primary extraction
-    in1_in2_elec <- for_display %>%
-      rename(source = input_L1, target = input_L2) %>%
-      mutate(level = 1) %>%
+    # Reused subsets. These retain the original filtering behavior,
+    # including excluding rows with missing output_L1.
+    non_electric_inputs <- for_display %>% filter(output_L1 != "Electricity")
+    electric_inputs <- for_display %>% filter(output_L1 == "Electricity")
+
+    # Electricity generation output uses val.out rather than input energy.
+    # Preserve this distinction to avoid changing the electricity balance.
+    electric_outputs <- elec_gen_out %>%
       filter(output_L1 == "Electricity") %>%
-      select(all_of(KEEP_NAMES))
-    # if losses are kept on the technology level then need to remove input EJ
-    # to electricity node to avoid double counting
-    in2_out1_elec <- elec_gen_out %>%
-      rename(source = input_L2, target = output_L1, value = val.out) %>%
-      mutate(level = 1,
-             source_color = COLORMAP[input_L1],
-             target_color = COLORMAP[target]) %>%
-      # TODO: cogeneration elec generation is categorized as Industry on the first level
-      filter(target == "Electricity") %>%
-      select(all_of(KEEP_NAMES))
+      mutate(source_color = COLORMAP[input_L1], target_color = COLORMAP[output_L1])
 
-    l1_long <- rbind(in1_out1, in1_in2_elec, in2_out1_elec) %>%
-      filter(source %!in% REFINING_TYPE) %>%
-      mutate(target = if_else(target %in% REFINING_TYPE, "Liquid Fuels", target))
+    # --------------------------------------------------------------------------
+    # Level 1: coarsest detail                             input_L1 -> output_L1
+    # --------------------------------------------------------------------------
 
-    # medium detail beyond just electricity
-    in1_in2 <- for_display %>%
-      rename(source = input_L1, target = input_L2) %>%
-      mutate(level = 2) %>%
-      filter(output_L1 != "Electricity") %>%
-      select(all_of(KEEP_NAMES))
-    in2_out2 <- for_display %>%
-      rename(source = input_L2, target = output_L2) %>%
-      mutate(level = 2) %>%
-      # feed to elec gen technologies require modified balance
-      filter(output_L1 != "Electricity") %>%
-      select(all_of(KEEP_NAMES))
-    in2_out2_elec <- elec_gen_out %>%
-      rename(source = input_L2, target = output_L2, value = val.out) %>%
-      mutate(level = 1,
-             source_color = COLORMAP[input_L1],
-             target_color = COLORMAP[output_L1]) %>%
-      # TODO: cogeneration elec generation is categorized as Industry on the first level
-      filter(target == "Electricity") %>%
-      select(all_of(KEEP_NAMES))
+    l1_long <- bind_rows(
+        make_edges(non_electric_inputs, "input_L1", "output_L1", detail_level = 1),
+        make_edges(electric_inputs, "input_L1", "input_L2", detail_level = 1),
+        make_edges(electric_outputs, "input_L2", "output_L1", detail_level = 1,
+                   value_col = "val.out")
+      ) %>%
+      filter(!(source %in% REFINING_TYPE)) %>%
+      mutate(target = if_else(target %in% REFINING_TYPE,"Liquid Fuels", target))
 
-    l2_long <- rbind(in1_in2,
-                     in1_in2_elec %>% mutate(level = 2),
-                     in2_out2,
-                     in2_out1_elec %>% mutate(level = 2))
+    # --------------------------------------------------------------------------
+    # Level 2: medium detail      input_L1 -> input_L2 -> output_L1 -> output_L2
+    # --------------------------------------------------------------------------
 
-    # filter level 3
-    in1_in3 <- for_display %>%
-      rename(source = input_L1, target = input_L3) %>%
-      mutate(level = 3) %>%
-      filter(output_L1 != "Electricity") %>%
-      select(all_of(KEEP_NAMES))
-    in1_in3_elec <- for_display %>%
-      rename(source = input_L1, target = input_L3) %>%
-      mutate(level = 3) %>%
-      filter(output_L1 == "Electricity") %>%
-      select(all_of(KEEP_NAMES))
-    out1_out2_lvl3 <- for_display %>%
-      rename(source = output_L1, target = output_L2) %>%
-      mutate(level = 3) %>%
-      select(all_of(KEEP_NAMES))
-    in3_out1 <- for_display %>%
-      rename(source = input_L3, target = output_L1) %>%
-      mutate(level = 3) %>%
-      # feed to elec gen technologies require modified balance
-      filter(target != "Electricity") %>%
-      select(all_of(KEEP_NAMES))
-    in3_out1_elec <- elec_gen_out %>%
-      rename(source = input_L3, target = output_L1, value = val.out) %>%
-      mutate(level = 3,
-             source_color = COLORMAP[input_L1],
-             target_color = COLORMAP[target]) %>%
-      # TODO: cogeneration elec generation is categorized as Industry on the first level
-      filter(target == "Electricity") %>%
-      select(all_of(KEEP_NAMES))
-    out2_out3 <- for_display %>%
-      rename(source = output_L2, target = output_L3) %>%
-      mutate(level = 3) %>%
-      select(all_of(KEEP_NAMES))
+    l2_long <- bind_rows(
+      make_edges(non_electric_inputs,"input_L1", "input_L2", detail_level = 2),
+      make_edges(electric_inputs, "input_L1", "input_L2", detail_level = 2),
+      make_edges(non_electric_inputs, "input_L2", "output_L2", detail_level = 2),
+      make_edges(electric_outputs, "input_L2", "output_L1", detail_level = 2,
+                 value_col = "val.out")
+    )
 
-    l3_long <- rbind(in1_in3, in1_in3_elec,
-                     in3_out1, in3_out1_elec,
-                     out1_out2_lvl3)
+    # --------------------------------------------------------------------------
+    # Level 3: detailed inputs and end uses
+    #             input_L0 -> input_L1 -> input_L3 (colored by input_L2) ->
+    #                output_L1 -> output_L2 -> output_L3 -> output_L4
+    # --------------------------------------------------------------------------
+
+    l3_long <- bind_rows(
+      make_edges(non_electric_inputs, "input_L1", "input_L3", detail_level = 3),
+      make_edges(electric_inputs,"input_L1", "input_L3", detail_level = 3),
+      make_edges(non_electric_inputs,"input_L3", "output_L1",detail_level = 3),
+      make_edges(electric_outputs, "input_L3", "output_L1", detail_level = 3,value_col = "val.out"),
+      make_edges(for_display,"output_L1", "output_L2",detail_level = 3),
+      make_edges(for_display,"output_L2", "output_L3",detail_level = 3),
+      make_edges(for_display,"output_L3", "output_L4",detail_level = 4)
+    )
+
+    # --------------------------------------------------------------------------
+    # Level 0 and special cases
+    # --------------------------------------------------------------------------
+    primary_en_prod_long <- rbind(
+      primary_prod_clean %>% mutate(level = 1),
+      primary_prod_clean %>% mutate(level = 2),
+      state_fossil_rsrc %>% mutate(level = 3)
+      ) %>%
+      mutate(source_color = unname(COLORMAP[target]),
+             target_color = source_color,
+             source_position = "input_L0",
+             target_position = "input_L1")
+
+    # Level 0 is attached to all views rather than repeating in the df
+    # the source for hydrogen are currently various primary energy categories;
+    # at some point this may change to separate production technologies too
+    hydrogen_prod_long <- hydrogen_prod %>%
+      mutate(level = 0,
+             source_position = "input_L1",
+             target_position = "input_L2")
+
+    # TODO: hydrogen to losses is all negative on level 0 and exactly 0 elsewhere; why?
+    hydrogen_loss_long <- hydrogen_loss %>%
+      mutate(level = 0,
+             value = if_else(value < 0, 0, value),
+             source_position = "input_L2",
+             target_position = "output_L4")
 
 
-    primary_en_prod_long <- rbind(primary_prod_clean %>% mutate(level = 1),
-                                  primary_prod_clean %>% mutate(level = 2),
-                                  state_fossil_rsrc %>% mutate(level = 3)) %>%
-      mutate(source_color = unname(COLORMAP[target]), target_color = source_color)
+    DISPLAY_LEVEL = 3  # TODO: remove after testing
 
-    # give level = 0 to all sectors
-    hydrogen_prod_long <- hydrogen_prod %>% mutate(level = 0)
-    hydrogen_loss_long <- hydrogen_loss %>% mutate(level = 0)
-
-
-    DISPLAY_LEVEL = 2  # TODO: remove after testing
 
     # if at a low resolution display level this will still have repeats that
     # need summing by group
     combo_grp <- rbind(l1_long, l2_long, l3_long,
+                       # add primary/H2 production and losses
                        primary_en_prod_long,
+                       hydrogen_prod_long,
                        refining_loss_long,
-                       elec_losses_long) %>%
-      # then add net energy trade because it is independent of display level
-      # due to lack of more granular data
-      rbind(en_tradebal, hydrogen_prod_long, hydrogen_loss_long) %>%
+                       elec_losses_long,
+                       hydrogen_loss_long,
+                       # then add net energy trade because it is independent of
+                       # display data due to lack of more granular data
+                       en_tradebal) %>%
       filter(source != target) %>%
       # fix processing sector colors (otherwise biorefining eg has elec,
       # biomass and NG colors because they are inputs and want to only color by
@@ -639,9 +629,9 @@ if (FALSE) {
              source_color = if_else(source %in% REFINING_TYPE,
                                     COLORMAP[target], source_color),
              units = "EJ",
-             diagram = "Energy & Water") %>%  # TODO: are there any details we would only keep on an energy diagram?
-      group_by(scenario, region, year, source, target, source_color,
-               target_color, level, units, diagram) %>%
+             diagram = "Energy") %>%  # TODO: are there any details we would only keep on an energy diagram?
+      group_by(scenario, region, year, source, target, source_color, source_position,
+               target_color, target_position, level, units, diagram) %>%
       summarize(value = sum(value), .groups = "drop")
 
     plot_grp <- combo_grp %>%
@@ -652,16 +642,32 @@ if (FALSE) {
 
     # Usage: single state plotting
     plot_sankey(plot_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"),
-                reg = "WA",
+                reg = "CA",
                 yr = FILTER_YEARS,
                 scen = SCENARIO,
-                animate = T)
+                animate = F)
 
     # write processed csv to file
     write.csv(combo_grp, "gcam_usa_energy.csv", row.names = FALSE)
     write_parquet(combo_grp, "gcam_usa_energy.parquet")
 
+
+    # TODO: write levels files separately
+    write_parquet(combo_grp %>% filter(level == 0), "gcam_usa_energy_l0.parquet")
+    write_parquet(combo_grp %>% filter(level == 1), "gcam_usa_energy_l1.parquet")
+    write_parquet(combo_grp %>% filter(level == 2), "gcam_usa_energy_l2.parquet")
+    write_parquet(combo_grp %>% filter(level == 3 | level == 4), "gcam_usa_energy_l3.parquet")
+
     # load from pre-processed csv
+
+
+    # calculate longest path in filtered nodes
+    # primary energy should align on the x axis
+    # secondary should align on the x axis
+    # net imported should align with primary
+    # net exported should align with end use
+    # more detail should be calculated
+    # things that have the same parent should render next to each other on the y axis
 
 
 

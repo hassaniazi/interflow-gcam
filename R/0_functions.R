@@ -280,7 +280,26 @@ query_im3_scen <- function(name = "", constance_node = "constance03", user = "ni
 #
 # plot sankey diagram
 
-# df_sankey <- rbind(df_waterWithdrawalsByStateSectorBasin, df_waterWithdrawalsByWaterSource, watcategory_sector_use)
+# Construct an edge table without renaming away the original hierarchy columns.
+KEEP_NAMES     <- c("scenario", "region", "year", "source", "target", "value",
+                    "level", "source_color", "target_color", "source_position",
+                    "target_position")
+make_edges <- function(data,
+                       source_col,
+                       target_col,
+                       detail_level,
+                       value_col = "value") {
+  data %>%
+    mutate(
+      source = .data[[source_col]],
+      target = .data[[target_col]],
+      value = .data[[value_col]],
+      level = .env$detail_level,
+      source_position = .env$source_col,
+      target_position = .env$target_col
+    ) %>%
+    select(all_of(KEEP_NAMES))
+}
 
 COLORMAP <- c(
   # supply colors depend on primary resource
@@ -319,7 +338,6 @@ COLORMAP <- c(
 
 )
 COLOR_LEVELS <- names(COLORMAP)
-
 
 
 plot_sankey <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
@@ -361,7 +379,6 @@ plot_sankey <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
   # filter to US regions
   if ("region" %in% colnames(df_sankey)) {
     df_sankey <- df_sankey %>% filter(region %in% reg)
-    # df_sankey <- df_sankey %>% filter(region %in% all_regions | region %in% reg)
   } else {
     reg <- "USA"   # don't want to print a title with every state abbreviation
   }
@@ -387,22 +404,6 @@ plot_sankey <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
   # # generate node label after filtering
   # node_labels <- unique(c(as.character(df_sankey$source), as.character(df_sankey$target)))
 
-
-
-  # filter basins in source column that are in target column
-  # if ("source" %in% colnames(df_sankey) && "target" %in% colnames(df_sankey)) {
-  #   df_sankey <- df_sankey %>%
-  #     filter(source %in% df_sankey$target)
-  # }
-
-  # # filter region if it is specified
-  # if (length(reg) > 0) {
-  #   df_sankey <- df_sankey %>% filter(region %in% reg)
-  # }
-
-  # if ("region" %in% colnames(df_sankey)) {
-  #   df_sankey <- df_sankey %>% filter(region == reg)
-  # }
 
   # filter data if scenario column exists
   if ("scenario" %in% colnames(df_sankey)) {
@@ -450,8 +451,8 @@ plot_sankey <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
     frame = ~year
   ) %>%
     layout(
-      title = paste0(paste(reg, collapse = ", "), " ", title, " for ", scen, " scenario",
-                     if_else(animate == T, "", paste0(" in ", yr))),
+      title = paste0(paste(reg, collapse = ", "), " ", title, " for ", scen, " scenario"), # TODO: fix when yr is a range
+                     #if_else(animate == T, "", paste0(" in ", yr))),
       font = list(size = 11)
     )
 
@@ -465,9 +466,6 @@ plot_sankey <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
   }
   return(p)
 }
-# usage: plot_sankey(ammonia_df)
-
-# plot_sankey(rbind(df_waterWithdrawalsByStateSectorBasin, df_waterWithdrawalsByWaterSource, watcategory_sector_use), "Water Withdrawals by Use Category and Basin")
 
 
 # regional strings #############################################################
