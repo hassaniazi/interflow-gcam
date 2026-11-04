@@ -19,19 +19,20 @@ COLOR_LEVEL    <- "DETAILED"
 FUTURE_YEARS   <- 2020:2100
 
 # Primary fuels
-RENEWABLES     <- c("Nuclear", "Wind", "Solar", "Biomass", "Hydrogen", "Hydropower", "Geothermal")
+RENEWABLES     <- c("Nuclear", "Wind", "Solar", "Biomass", "Hydropower", "Geothermal")
 FOSSIL_FUELS   <- c("Coal", "Oil", "Natural Gas")
+PRIMARY_EN     <- c(FOSSIL_FUELS, RENEWABLES)
 FOSSIL_MAPPING <- c("coal", "crude oil", "unconventional oil", "natural gas")
 
 # Secondary fuels
-SECONDARY_EN   <- c("Electricity", "Liquid Fuels")
+SECONDARY_EN   <- c("Electricity", "Liquid Fuels", "Hydrogen")
 REFINING_TYPE  <- c("Oil Refining", "Biorefining", "Coal to Liquids", "Gas to Liquids")
 ELEC_LOADTYPE  <- c("superpeak", "subpeak", "peak", "baseload", "intermediate")
 # TODO: bring a file, left join for all regions possible in future
 TD_IO          <- 1.06237346267644    # 2021 USA I:O value for L126.IO_R_electd_F_Yh
 
 # End use
-DEMAND_SECTORS <- c("Industry", "Buildings", "Transportation")
+DEMAND_SECTORS <- c("Industry", "Buildings", "Transport")
 
 # 1. Load data ------------------------------------------------------------
 options(scipen = 999)
@@ -266,7 +267,7 @@ if (FALSE) {
 
     # TODO: separate out biomass and hydrogen trade; currently assume production = consumption
     non_fossil_prod <- simple_sources %>%
-      filter(input_L1 %in% RENEWABLES) %>%
+      filter(input_L1 %in% c(RENEWABLES, "Hydrogen")) %>%
       select(scenario, region, year, source = input_L1, target = output_L1, value)
 
     # attribute nuclearFuel to state where concentrate is produced due to data
@@ -340,13 +341,15 @@ if (FALSE) {
              source_color = unname(COLORMAP[target]),
              target_color = unname(COLORMAP[target]),
              source_position = "input_L1",
-             target_position = "output_L4") %>%
+             target_position = "output_L4",
+             source_type = "SECONDARY",
+             target_type = "LOSSES") %>%
       select(scenario, region, year, source = sector, target, value = losses,
-             source_color, source_position, target_color, target_position)
+             source_color, source_position, source_type, target_color, target_position, target_type)
 
     refining_loss_long <- refining_loss %>%
       group_by(scenario, region, year, target, source_color, target_color,
-               source_position, target_position) %>%
+               source_position, target_position, source_type, target_type) %>%
       summarize(value = sum(value), .groups = "drop") %>%
       mutate(source = "Liquid Fuels", level = 1) %>%
       rbind(refining_loss %>% mutate(level = 2),
@@ -452,7 +455,9 @@ if (FALSE) {
                      source_color, target_color, value = tech_loss) %>%
               mutate(level = 3, source_position = "input_L3"),
             td_losses) %>%
-      mutate(target_position = "output_L4")
+      mutate(target_position = "output_L4",
+             source_type = "SECONDARY",
+             target_type = "LOSSES")
 
     ## C. Hydrogen ----
     hydrogen_cons <- simple_sources %>%
@@ -512,7 +517,9 @@ if (FALSE) {
              target_color = source_color,
              source_position = if_else(grepl("Net", source), "input_L0", "input_L1"),
              target_position = if_else(grepl("Net", target), "input_L1", "output_L1"),
-             level = 0)
+             level = 0,
+             source_type = if_else(source %in% PRIMARY_EN, "PRIMARY", "SECONDARY"),
+             target_type = if_else(target %in% c(SECONDARY_EN, REFINING_TYPE), "SECONDARY", "PRIMARY"))
   }
 
   # !!!!! setting up the long df ----
@@ -520,10 +527,19 @@ if (FALSE) {
     source("./R/0_functions.R")      # TODO: remove after testing
     for_display <- simple_sources %>%
       mutate(source_color = COLORMAP[input_L1],
-             target_color = COLORMAP[output_L1])
+             target_color = COLORMAP[output_L1],
+             source_type = case_when(
+               input_L1 %in% PRIMARY_EN ~ "PRIMARY",
+               input_L1 %in% DEMAND_SECTORS ~ "END USE",
+               TRUE ~ "SECONDARY"),
+             target_type = case_when(
+               output_L1 %in% DEMAND_SECTORS ~ "END USE",
+               output_L1 %in% c(SECONDARY_EN, REFINING_TYPE) ~ "SECONDARY",
+               TRUE ~ NA)
+      )
 
-    # Reused subsets. These retain the original filtering behavior,
-    # including excluding rows with missing output_L1.
+    # Reused subsets. These retain the original filtering behavior, including
+    # excluding rows with missing output_L1.
     non_electric_inputs <- for_display %>% filter(output_L1 != "Electricity")
     electric_inputs <- for_display %>% filter(output_L1 == "Electricity")
 
@@ -531,17 +547,25 @@ if (FALSE) {
     # Preserve this distinction to avoid changing the electricity balance.
     electric_outputs <- elec_gen_out %>%
       filter(output_L1 == "Electricity") %>%
-      mutate(source_color = COLORMAP[input_L1], target_color = COLORMAP[output_L1])
+      mutate(source_color = COLORMAP[input_L1],
+             target_color = COLORMAP[output_L1],
+             source_type = case_when(
+               input_L1 %in% PRIMARY_EN ~ "PRIMARY",
+               input_L1 %in% DEMAND_SECTORS ~ "END USE",
+               TRUE ~ "SECONDARY"),
+             target_type = case_when(
+               output_L1 %in% DEMAND_SECTORS ~ "END USE",
+               output_L1 %in% c(SECONDARY_EN, REFINING_TYPE) ~ "SECONDARY",
+               TRUE ~ NA))
+
 
     # --------------------------------------------------------------------------
     # Level 1: coarsest detail                             input_L1 -> output_L1
     # --------------------------------------------------------------------------
-
     l1_long <- bind_rows(
-        make_edges(non_electric_inputs, "input_L1", "output_L1", detail_level = 1),
-        make_edges(electric_inputs, "input_L1", "input_L2", detail_level = 1),
-        make_edges(electric_outputs, "input_L2", "output_L1", detail_level = 1,
-                   value_col = "val.out")
+        make_edges(non_electric_inputs, "input_L1", "output_L1", level = 1),
+        make_edges(electric_inputs, "input_L1", "input_L2", level = 1,),
+        make_edges(electric_outputs, "input_L2", "output_L1", level = 1, value_col = "val.out")
       ) %>%
       filter(!(source %in% REFINING_TYPE)) %>%
       mutate(target = if_else(target %in% REFINING_TYPE,"Liquid Fuels", target))
@@ -549,12 +573,11 @@ if (FALSE) {
     # --------------------------------------------------------------------------
     # Level 2: medium detail      input_L1 -> input_L2 -> output_L1 -> output_L2
     # --------------------------------------------------------------------------
-
     l2_long <- bind_rows(
-      make_edges(non_electric_inputs,"input_L1", "input_L2", detail_level = 2),
-      make_edges(electric_inputs, "input_L1", "input_L2", detail_level = 2),
-      make_edges(non_electric_inputs, "input_L2", "output_L2", detail_level = 2),
-      make_edges(electric_outputs, "input_L2", "output_L1", detail_level = 2,
+      make_edges(non_electric_inputs,"input_L1", "input_L2", level = 2),
+      make_edges(electric_inputs, "input_L1", "input_L2", level = 2),
+      make_edges(non_electric_inputs, "input_L2", "output_L2", level = 2),
+      make_edges(electric_outputs, "input_L2", "output_L1", level = 2,
                  value_col = "val.out")
     )
 
@@ -563,15 +586,14 @@ if (FALSE) {
     #             input_L0 -> input_L1 -> input_L3 (colored by input_L2) ->
     #                output_L1 -> output_L2 -> output_L3 -> output_L4
     # --------------------------------------------------------------------------
-
     l3_long <- bind_rows(
-      make_edges(non_electric_inputs, "input_L1", "input_L3", detail_level = 3),
-      make_edges(electric_inputs,"input_L1", "input_L3", detail_level = 3),
-      make_edges(non_electric_inputs,"input_L3", "output_L1",detail_level = 3),
-      make_edges(electric_outputs, "input_L3", "output_L1", detail_level = 3,value_col = "val.out"),
-      make_edges(for_display,"output_L1", "output_L2",detail_level = 3),
-      make_edges(for_display,"output_L2", "output_L3",detail_level = 3),
-      make_edges(for_display,"output_L3", "output_L4",detail_level = 4)
+      make_edges(non_electric_inputs, "input_L1", "input_L3", level = 3),
+      make_edges(electric_inputs,"input_L1", "input_L3", level = 3),
+      make_edges(non_electric_inputs,"input_L3", "output_L1",level = 3),
+      make_edges(electric_outputs, "input_L3", "output_L1", level = 3,value_col = "val.out"),
+      make_edges(for_display,"output_L1", "output_L2",level = 3),
+      make_edges(for_display,"output_L2", "output_L3",level = 3),
+      make_edges(for_display,"output_L3", "output_L4",level = 4),
     )
 
     # --------------------------------------------------------------------------
@@ -585,7 +607,9 @@ if (FALSE) {
       mutate(source_color = unname(COLORMAP[target]),
              target_color = source_color,
              source_position = "input_L0",
-             target_position = "input_L1")
+             target_position = "input_L1",
+             source_type = "PRIMARY",
+             target_type = "PRIMARY")
 
     # Level 0 is attached to all views rather than repeating in the df
     # the source for hydrogen are currently various primary energy categories;
@@ -593,17 +617,19 @@ if (FALSE) {
     hydrogen_prod_long <- hydrogen_prod %>%
       mutate(level = 0,
              source_position = "input_L1",
-             target_position = "input_L2")
+             target_position = "input_L2",
+             source_type = "PRIMARY",
+             target_type = "SECONDARY")
 
-    # TODO: hydrogen to losses is all negative on level 0 and exactly 0 elsewhere; why?
+    # TODO: hydrogen to losses is all negative on level 0 and exactly 0 elsewhere;
+    #        prob missing USA level production
     hydrogen_loss_long <- hydrogen_loss %>%
       mutate(level = 0,
              value = if_else(value < 0, 0, value),
              source_position = "input_L2",
-             target_position = "output_L4")
-
-
-    DISPLAY_LEVEL = 3  # TODO: remove after testing
+             target_position = "output_L4",
+             source_type = "SECONDARY",
+             target_type = "LOSSES")
 
 
     # if at a low resolution display level this will still have repeats that
@@ -617,28 +643,74 @@ if (FALSE) {
                        hydrogen_loss_long,
                        # then add net energy trade because it is independent of
                        # display data due to lack of more granular data
-                       en_tradebal) %>%
+                        en_tradebal) %>%
       filter(source != target) %>%
       # fix processing sector colors (otherwise biorefining eg has elec,
       # biomass and NG colors because they are inputs and want to only color by
       # the primary input)
-      mutate(target_color = if_else(target %in% REFINING_TYPE,
-                                    COLORMAP[source], target_color),
-             source_color = if_else(source %in% REFINING_TYPE & target != "Losses",
-                                    COLORMAP[source], source_color),
-             source_color = if_else(source %in% REFINING_TYPE,
-                                    COLORMAP[target], source_color),
+      mutate(#target_color = if_else(target %in% REFINING_TYPE,
+             #                       COLORMAP[source], target_color),
+             #source_color = if_else(source %in% REFINING_TYPE & target != "Losses",
+             #                        COLORMAP[source], source_color),
+             #source_color = if_else(source %in% REFINING_TYPE,
+             #                        COLORMAP[target], source_color),
              units = "EJ",
-             diagram = "Energy") %>%  # TODO: are there any details we would only keep on an energy diagram?
-      group_by(scenario, region, year, source, target, source_color, source_position,
-               target_color, target_position, level, units, diagram) %>%
+             diagram = "Energy") %>%
+      group_by(scenario, region, year, source, target, source_color, source_position, source_type,
+               target_color, target_position, target_type, level, units, diagram) %>%
       summarize(value = sum(value), .groups = "drop")
 
+
+    # Combine source and target to get unique nodes and their colors
+    nodes <- combo_grp %>%
+      select(source, source_color, source_type) %>%
+      distinct() %>%
+      rename(node = source, node_color = source_color, node_pos = source_type) %>%
+      bind_rows(combo_grp %>%
+                  select(target, target_color, target_type) %>%
+                  rename(node = target, node_color = target_color, node_pos = target_type)
+      ) %>%
+      distinct()
+
+    nodes_single <- nodes %>%
+      group_by(node) %>%
+      filter(n() == 1) %>%
+      ungroup()
+
+    nodes_dups <- nodes %>%
+      group_by(node) %>%
+      filter(n() > 1) %>%
+      ungroup()
+
+    nodes_end <- nodes_dups %>% filter(node_pos == "END USE")
+    nodes_mid <- nodes_dups %>% filter(!(node %in% nodes_end$node), node_pos == "SECONDARY")
+
+    nodes <- rbind(nodes_single, nodes_mid, nodes_end) %>%
+      mutate(rgb = toRGB(node_color, alpha = .9))
+
+    # --------------------------------------------------------------------------
+    # Write to file ----
+    # --------------------------------------------------------------------------
+    #write.csv(combo_grp, "gcam_usa_energy.csv", row.names = FALSE)
+    write_parquet(combo_grp, "gcam_usa_energy.parquet")
+
+    # write level files separately to improve load times
+    write_parquet(combo_grp %>% filter(level == 0), "gcam_usa_energy_l0.parquet")
+    write_parquet(combo_grp %>% filter(level == 1), "gcam_usa_energy_l1.parquet")
+    write_parquet(combo_grp %>% filter(level == 2), "gcam_usa_energy_l2.parquet")
+    write_parquet(combo_grp %>% filter(level == 3 | level == 4), "gcam_usa_energy_l3.parquet")
+
+    # --------------------------------------------------------------------------
+    # Test Display ----
+    # --------------------------------------------------------------------------
+    # load from pre-processed file
+    combo_grp <- read_parquet("gcam_usa_energy.parquet")
+
+    DISPLAY_LEVEL = 3  # TODO: remove after testing
     plot_grp <- combo_grp %>%
       filter(scenario %in% SCENARIO, year %in% FILTER_YEARS, level %in% c(DISPLAY_LEVEL, 0)) %>%
-      group_by(scenario, region, year, source, target, source_color, target_color) %>%
+      group_by(scenario, region, year, source, target, source_color, target_color, source_type, target_type) %>%
       summarize(value = sum(value), .groups = "drop")
-
 
     # Usage: single state plotting
     plot_sankey(plot_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"),
@@ -646,19 +718,6 @@ if (FALSE) {
                 yr = FILTER_YEARS,
                 scen = SCENARIO,
                 animate = F)
-
-    # write processed csv to file
-    write.csv(combo_grp, "gcam_usa_energy.csv", row.names = FALSE)
-    write_parquet(combo_grp, "gcam_usa_energy.parquet")
-
-
-    # TODO: write levels files separately
-    write_parquet(combo_grp %>% filter(level == 0), "gcam_usa_energy_l0.parquet")
-    write_parquet(combo_grp %>% filter(level == 1), "gcam_usa_energy_l1.parquet")
-    write_parquet(combo_grp %>% filter(level == 2), "gcam_usa_energy_l2.parquet")
-    write_parquet(combo_grp %>% filter(level == 3 | level == 4), "gcam_usa_energy_l3.parquet")
-
-    # load from pre-processed csv
 
 
     # calculate longest path in filtered nodes
@@ -682,14 +741,10 @@ if (FALSE) {
     # NOT STARTED
     # TODO: separate levels for energy sources and end uses so users can expand either side independently
     # TODO: group L3/4 by cooling tech or by energy tech?
-    # TODO: should subsectors be separate nodes or have slightly different colors (how to do programmatically?)
-    # TODO: give the option to group multiple states (e.g. look at new england, pnw, southeast etc)
-    #        and maybe show the percent of a highlight state compared to the neighborhood? like on hover
+    # TODO: maybe show the percent of a highlight state compared to the neighborhood? like on hover
     #        over highlight just that state's contributions?
     # TODO: merge with water sankey
     # TODO: move mappings into 0_functions as a preload?
-    # TODO: save the processed csv and add reprocessing toggle (ensure last stage only needs to be filtering)
-    # TODO: may need to separate location filter part of pipeline
     # TODO: should superpeak/base really be collapsed at top of part 2? or removed?
 
     # IN PROGRESS
@@ -700,22 +755,11 @@ if (FALSE) {
     # TODO: DOCUMENTATION, make choices clear
 
     # STYLING
-    # TODO: color end use details by the main end use category
-    # TODO: bundle exports vertically? like losses, exports, in-state energy consumption, water
-    #          also want them to align with secondary prod and not end use consumption?
     # TODO: adjust labels to include value and units
-    # TODO: figure out how to fix some of the weird auto y position ordering
     # TODO: add color legend
-    # TODO: have a colormap toggle for different levels of detail
-    #        - right now (but should liquid fuels be the same color as oil? just have a fossil color?)
-    #        - fossil vs renewable + end use same nodes
-    #        - same as im3 dash (orange for all non electricity, yellow elec, gray losses)
     # TODO: have some kind of on click persistent highlight + better tooltip
     # TODO: on select just highlight the path you've selected?
     # TODO: make hover over more useful
-    # TODO: pin the x axis for stuff like refining and biorefining so they align;
-    #         does it make sense to have like a primary, transformation, end use bar at the bottom?
-
   }
 }
 

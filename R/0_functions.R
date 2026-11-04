@@ -283,18 +283,14 @@ query_im3_scen <- function(name = "", constance_node = "constance03", user = "ni
 # Construct an edge table without renaming away the original hierarchy columns.
 KEEP_NAMES     <- c("scenario", "region", "year", "source", "target", "value",
                     "level", "source_color", "target_color", "source_position",
-                    "target_position")
-make_edges <- function(data,
-                       source_col,
-                       target_col,
-                       detail_level,
-                       value_col = "value") {
+                    "target_position", "source_type", "target_type")
+make_edges <- function(data, source_col, target_col, level, value_col = "value") {
   data %>%
     mutate(
       source = .data[[source_col]],
       target = .data[[target_col]],
       value = .data[[value_col]],
-      level = .env$detail_level,
+      level = .env$level,
       source_position = .env$source_col,
       target_position = .env$target_col
     ) %>%
@@ -307,19 +303,19 @@ COLORMAP <- c(
   "Uranium"         = "#884488",
   "Wind"            = "#BDBDBD",
   "Solar"           = "#ffe28a",
-  "Geothermal"      = "#FF6600",
+  "Geothermal"      = "#FA5053",
   "Biomass"         = "#117733",
   "Hydrogen"        = "#00A7A7",
   "Hydropower"      = "#0072B2",
   "Coal"            = "#362312",  # TODO: make more separate from losses color
   "Oil"             = "#8d4e28",
-  "Natural Gas"     = "#87CEEB",
+  "Natural Gas"     = "#D6B588",
 
   # secondary processes
   "Biorefining"     = "#117733",
   "Oil Refining"    = "#8d4e28",
   "Coal to Liquids" = "#362312",
-  "Gas to Liquids"  = "#87CEEB",
+  "Gas to Liquids"  = "#D6B588",
 
   # secondary fuels
   "Electricity"     = "#F0E442",
@@ -415,18 +411,47 @@ plot_sankey <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
   }
 
   # Combine source and target to get unique nodes and their colors
+  # nodes <- df_sankey %>%
+  #   select(source, source_color) %>%
+  #   distinct() %>%
+  #   rename(node = source, node_color = source_color) %>%
+  #   bind_rows(df_sankey %>%
+  #               select(target, target_color) %>%
+  #               rename(node = target, node_color = target_color)
+  #   ) %>%
+  #   distinct()
+  #
+  # # map node colors to node labels
+  # node_colors <- toRGB(nodes$node_color[match(node_labels, nodes$node)], alpha = .9)
+  #
+
+
+  # Combine source and target to get unique nodes and their colors
   nodes <- df_sankey %>%
-    select(source, source_color) %>%
+    select(source, source_color, source_type) %>%
     distinct() %>%
-    rename(node = source, node_color = source_color) %>%
+    rename(node = source, node_color = source_color, node_pos = source_type) %>%
     bind_rows(df_sankey %>%
-                select(target, target_color) %>%
-                rename(node = target, node_color = target_color)
+                select(target, target_color, target_type) %>%
+                rename(node = target, node_color = target_color, node_pos = target_type)
     ) %>%
     distinct()
 
-  # map node colors to node labels
-  node_colors <- toRGB(nodes$node_color[match(node_labels, nodes$node)], alpha = .9)
+  nodes_single <- nodes %>%
+    group_by(node) %>%
+    filter(n() == 1) %>%
+    ungroup()
+
+  nodes_dups <- nodes %>%
+    group_by(node) %>%
+    filter(n() > 1) %>%
+    ungroup()
+
+  nodes_end <- nodes_dups %>% filter(node_pos == "END USE")
+  nodes_mid <- nodes_dups %>% filter(!(node %in% nodes_end$node), node_pos == "SECONDARY")
+
+  nodes <- rbind(nodes_single, nodes_mid, nodes_end) %>%
+    mutate(rgb = toRGB(node_color, alpha = .9))
 
   # plot the sankey
   p <- plot_ly(
@@ -437,13 +462,13 @@ plot_sankey <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
       # group = 2,
       # pad = 15,
       # thickness = 20,
-      label = node_labels,
-      color = node_colors,
+      label = nodes$node,
+      color = nodes$node_color,
       line = list(color = "black", width = 0.5)
     ),
     link = list(
-      source = match(df_sankey$source, node_labels) - 1,
-      target = match(df_sankey$target, node_labels) - 1,
+      source = match(df_sankey$source, nodes$node) - 1,
+      target = match(df_sankey$target, nodes$node) - 1,
       value = df_sankey$value,
       year = df_sankey$year,
       color = toRGB(df_sankey$source_color, alpha = .8)
@@ -456,8 +481,7 @@ plot_sankey <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
       font = list(size = 11)
     )
 
-  # TODO: the slider needs to be created first, otherwise the below animation
-  # crashes.
+  # TODO: the slider needs to be created first, otherwise the animation crashes.
   if (animate == T) {
     p <- p %>%
       animation_opts(frame = 2000, redraw = T) %>%
