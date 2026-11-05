@@ -5,11 +5,11 @@ regional biomassOil,regional biomassOil,OilCrop,regional oilcrop,Biomass,Oil Cro
 regional corn for ethanol,regional corn for ethanol,regional corn for ethanol,regional corn,Biomass,Corn,Corn,Biomass,Biomass,Biomass,Biomass
 biomass liquids,biomass liquids,corn ethanol,regional corn for ethanol,Biomass,Corn Ethanol,Corn Ethanol,Biorefining,Biorefining,Biorefining,Biorefining
 biomass liquids,biomass liquids,FT biofuels,regional biomass,Biomass,FT biofuels,FT biofuels,Biorefining,Biorefining,Biorefining,Biorefining
-biomass liquids,biomass liquids,FT biofuels CCS level 1,regional biomass,Biomass,FT biofuels CCS level 1,FT biofuels CCS level 1,Biorefining,Biorefining,Biorefining,Biorefining
-biomass liquids,biomass liquids,FT biofuels CCS level 2,regional biomass,Biomass,FT biofuels CCS level 2,FT biofuels CCS level 2,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,FT biofuels CCS level 1,regional biomass,Biomass,FT biofuels,FT biofuels,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,FT biofuels CCS level 2,regional biomass,Biomass,FT biofuels,FT biofuels,Biorefining,Biorefining,Biorefining,Biorefining
 biomass liquids,biomass liquids,cellulosic ethanol,regional biomass,Biomass,cellulosic ethanol,cellulosic ethanol,Biorefining,Biorefining,Biorefining,Biorefining
-biomass liquids,biomass liquids,cellulosic ethanol CCS level 1,regional biomass,Biomass,cellulosic ethanol CCS level 1,cellulosic ethanol CCS level 1,Biorefining,Biorefining,Biorefining,Biorefining
-biomass liquids,biomass liquids,cellulosic ethanol CCS level 2,regional biomass,Biomass,cellulosic ethanol CCS level 2,cellulosic ethanol CCS level 2,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,cellulosic ethanol CCS level 1,regional biomass,Biomass,cellulosic ethanol,cellulosic ethanol,Biorefining,Biorefining,Biorefining,Biorefining
+biomass liquids,biomass liquids,cellulosic ethanol CCS level 2,regional biomass,Biomass,cellulosic ethanol,cellulosic ethanol,Biorefining,Biorefining,Biorefining,Biorefining
 biomass liquids,biomass liquids,biodiesel,regional biomassOil,Biomass,Biodiesel,Biodiesel,Biorefining,Biorefining,Biorefining,Biorefining
 biomass liquids,biomass liquids,corn ethanol,elect_td_ind,Electricity,Corn Ethanol,Corn Ethanol,Biorefining,Biorefining,Biorefining,Biorefining
 biomass liquids,biomass liquids,biodiesel,wholesale gas,Natural Gas,Biodiesel,Biodiesel,Biorefining,Biorefining,Biorefining,Biorefining
@@ -68,8 +68,8 @@ resid refrigerators,electricity,refrigerator,elect_td_bld,Electricity,Electricit
 resid televisions,electricity,electricity,elect_td_bld,Electricity,Electricity,Electricity,Buildings,Residential,Appliance,Television
 delivered coal,delivered coal,delivered coal,regional coal,Coal,Coal,Coal,Coal,Coal,Coal,Coal
 regional coal,regional coal,regional coal,coal,Coal,Coal,Coal,Coal,Coal,Coal,Coal
-coal to liquids,coal to liquids,coal to liquids CCS level 1,regional coal,Coal,CTL CCS Level 1,CTL CCS Level 1,Coal to Liquids,Coal to Liquids,Coal to Liquids,Coal to Liquids
-coal to liquids,coal to liquids,coal to liquids CCS level 2,regional coal,Coal,CTL CCS Level 2,CTL CCS Level 2,Coal to Liquids,Coal to Liquids,Coal to Liquids,Coal to Liquids
+coal to liquids,coal to liquids,coal to liquids CCS level 1,regional coal,Coal,CTL CCS,CTL CCS,Coal to Liquids,Coal to Liquids,Coal to Liquids,Coal to Liquids
+coal to liquids,coal to liquids,coal to liquids CCS level 2,regional coal,Coal,CTL CCS,CTL CCS,Coal to Liquids,Coal to Liquids,Coal to Liquids,Coal to Liquids
 H2 distribution,H2 distribution,H2 distribution,H2 central production,Central Production,Central Production,Central Production,Distribution,Distribution,Distribution,Distribution
 baseload electricity,,,baseload electricity,Electricity,Electricity,Electricity,Electricity,Electricity,Electricity,Electricity
 electricity,biomass,biomass (conv) (dry cooling),regional biomass,Biomass,Biomass Conv,Dry Cooling,Electricity,Electricity,Electricity,Electricity

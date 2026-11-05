@@ -282,8 +282,8 @@ query_im3_scen <- function(name = "", constance_node = "constance03", user = "ni
 
 # Construct an edge table without renaming away the original hierarchy columns.
 KEEP_NAMES     <- c("scenario", "region", "year", "source", "target", "value",
-                    "level", "source_color", "target_color", "source_position",
-                    "target_position", "source_type", "target_type")
+                    "level", "source_position", "target_position", "source_type",
+                    "target_type", "source_key", "target_key")
 make_edges <- function(data, source_col, target_col, level, value_col = "value") {
   data %>%
     mutate(
@@ -295,6 +295,28 @@ make_edges <- function(data, source_col, target_col, level, value_col = "value")
       target_position = .env$target_col
     ) %>%
     select(all_of(KEEP_NAMES))
+}
+
+classify_node <- function(node, position) {
+  case_when(
+    node == "Losses"                           ~ "losses",
+    grepl("^Net Imported|^Produced ", node)    ~ "net_import",
+    grepl("^Net Exported", node)               ~ "net_export",
+    node %in% c("Electricity", "Liquid Fuels") ~ "carrier",
+    node %in% PRIMARY_EN                       ~ "primary",
+    node %in% c("Hydrogen", REFINING_TYPE)     ~ "transformation",
+    position == "input_L0"                     ~ "net_import",
+    position %in% c("input_L2", "input_L3")    ~ "transformation",
+    grepl("^output_L", position)               ~ "end_use",
+    TRUE                                       ~ NA_character_
+  )
+}
+
+classify_sector <- function(l1_ancestor) {
+  case_when(l1_ancestor == "Buildings" ~ "buildings",
+            l1_ancestor == "Industry"  ~ "industry",
+            l1_ancestor == "Transport" ~ "transport",
+            TRUE ~ NA_character_)
 }
 
 COLORMAP <- c(
@@ -335,161 +357,159 @@ COLORMAP <- c(
 )
 COLOR_LEVELS <- names(COLORMAP)
 
+# map a node or edge key to its COLORMAP entry
+# (e.g. "Net Exported Coal" -> "Coal", "Produced Uranium" -> "Nuclear")
+color_key <- function(key) {
+  k <- str_remove(key, "^(Net Imported|Net Exported|Produced) ")
+  if_else(k == "Uranium", "Nuclear", k)
+}
 
-plot_sankey <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
-                        scen = "rcp45cooler_ssp3", yr = 2050,
-                        animate = F, animateby = year, showFut = T, reg = states) {
+plot_sankey <- function(df_sankey, nodes,
+                        title = "GCAM-USA Sankey Diagram",
+                        scen = "rcp45cooler_ssp3", yr = 2050, reg = states,
+                        animate = FALSE, showFut = TRUE) {
 
-  # stop if the data has multiple flows
-  if (any(duplicated(df_sankey))) {
-    head(repeats(df_sankey))
-    stop("Data has multiple flows / repeated rows. Please check the data.")
+  df <- df_sankey %>%
+    filter(scenario == scen, region %in% reg) %>%
+    { if (showFut) filter(., year >= 2020) else . } %>%
+    { if (!animate) filter(., year == yr) else . } %>%
+    group_by(scenario, year, source, target) %>%
+    summarize(value = sum(value), .groups = "drop") %>%
+    filter(value > 0)
+
+  if (animate) {  # plotly frames need identical node sets each year
+    df <- complete(df, scenario, year, nesting(source, target), fill = list(value = 0))
   }
 
-  # TODO: let animate take year or scenario or c("year", "scenario") as input,
-  # and change the code accordingly. Set a default to animate over years. Not
-  # sure how to handle both year and scenario, perhaps by creating two diagrams.
+  # restrict node table to nodes present and fail loudly on anything unmapped
+  used  <- unique(c(df$source, df$target))
+  missing <- setdiff(used, nodes$node)
+  if (length(missing)) stop("Nodes missing from node table: ", paste(missing, collapse = ", "))
+  nd <- nodes %>% filter(node %in% used)
 
-  if (tidy) {
-    df_sankey <- df_sankey %>% rename_water_use_categories() %>% rename_water_source()
-  }
+  src_idx <- match(df$source, nd$node) - 1
+  tgt_idx <- match(df$target, nd$node) - 1
 
-  # complete the data to set the full canvas
-  if ("scenario" %in% colnames(df_sankey)) {
-    df_sankey <- as.data.frame(df_sankey) %>%
-      complete(scenario, year, nesting(source, target), fill = list(value = 0))
-  } else {
-    df_sankey <- as.data.frame(df_sankey) %>%
-      complete(nesting(source, target), fill = list(value = 0)) %>%
-      mutate(year = yr)
-  }
-
-  # generate node label before filtering
-  node_labels <- unique(c(as.character(df_sankey$source), as.character(df_sankey$target)))
-
-  # only show future
-  if (showFut) {
-    df_sankey <- df_sankey %>% filter(year >= 2020)
-  }
-
-  # filter to US regions
-  if ("region" %in% colnames(df_sankey)) {
-    df_sankey <- df_sankey %>% filter(region %in% reg)
-  } else {
-    reg <- "USA"   # don't want to print a title with every state abbreviation
-  }
-
-  # # always keep USA, Mexico, and Canada if they are in the region column. Filter based on US states passed on the reg argument
-  # if ("region" %in% colnames(df_sankey)) {
-  #   df_sankey_reg_all <- df_sankey %>% filter(region %in% c("USA", "Mexico", "Canada") | region %in% reg)
-  #
-  #   df_sankey_reg_state <- df_sankey_reg_all %>% filter(region %in% c("") | region %in% reg)
-  #
-  #   # if the target column of df_sankey contains strings in source column of df_sankey_reg, then filter to those
-  #   df_sankey_reg_f <- df_sankey_reg_all %>% filter(target %in% unique(df_sankey_reg_state$source))
-  #   # df_sankey_reg_f_e <- df_sankey %>% filter(source %in% unique(df_sankey_reg_f$target))
-  #   df_sankey <- rbind(df_sankey_reg_f, df_sankey_reg_state) %>% unique()
-  #
-  # }
-  #
-  #
-  # # complete the data to set the full canvas
-  # df_sankey <- as.data.frame(df_sankey) %>%
-  #   complete(scenario, year, nesting(source, target), fill = list(value = 0))
-  #
-  # # generate node label after filtering
-  # node_labels <- unique(c(as.character(df_sankey$source), as.character(df_sankey$target)))
-
-
-  # filter data if scenario column exists
-  if ("scenario" %in% colnames(df_sankey)) {
-    df_sankey <- df_sankey %>% filter(scenario == scen)
-  }
-
-  if (animate == F) {
-    df_sankey <- df_sankey %>% filter(year == yr)
-  }
-
-  # Combine source and target to get unique nodes and their colors
-  # nodes <- df_sankey %>%
-  #   select(source, source_color) %>%
-  #   distinct() %>%
-  #   rename(node = source, node_color = source_color) %>%
-  #   bind_rows(df_sankey %>%
-  #               select(target, target_color) %>%
-  #               rename(node = target, node_color = target_color)
-  #   ) %>%
-  #   distinct()
-  #
-  # # map node colors to node labels
-  # node_colors <- toRGB(nodes$node_color[match(node_labels, nodes$node)], alpha = .9)
-  #
-
-
-  # Combine source and target to get unique nodes and their colors
-  nodes <- df_sankey %>%
-    select(source, source_color, source_type) %>%
-    distinct() %>%
-    rename(node = source, node_color = source_color, node_pos = source_type) %>%
-    bind_rows(df_sankey %>%
-                select(target, target_color, target_type) %>%
-                rename(node = target, node_color = target_color, node_pos = target_type)
-    ) %>%
-    distinct()
-
-  nodes_single <- nodes %>%
-    group_by(node) %>%
-    filter(n() == 1) %>%
-    ungroup()
-
-  nodes_dups <- nodes %>%
-    group_by(node) %>%
-    filter(n() > 1) %>%
-    ungroup()
-
-  nodes_end <- nodes_dups %>% filter(node_pos == "END USE")
-  nodes_mid <- nodes_dups %>% filter(!(node %in% nodes_end$node), node_pos == "SECONDARY")
-
-  nodes <- rbind(nodes_single, nodes_mid, nodes_end) %>%
-    mutate(rgb = toRGB(node_color, alpha = .9))
-
-  # plot the sankey
   p <- plot_ly(
-    data = df_sankey,
     type = "sankey",
     arrangement = "snap",
     node = list(
-      # group = 2,
-      # pad = 15,
-      # thickness = 20,
-      label = nodes$node,
-      color = nodes$node_color,
-      line = list(color = "black", width = 0.5)
+      label = nd$node,
+      color = nd$color,
+      pad = 15, thickness = 15,
+      line = list(color = "black", width = 0.5),
+      customdata = paste0(nd$role, if_else(is.na(nd$sector), "", paste0(" / ", nd$sector))),
+      hovertemplate = "%{label}<br>%{customdata}<extra></extra>"
     ),
     link = list(
-      source = match(df_sankey$source, nodes$node) - 1,
-      target = match(df_sankey$target, nodes$node) - 1,
-      value = df_sankey$value,
-      year = df_sankey$year,
-      color = toRGB(df_sankey$source_color, alpha = .8)
+      source = src_idx,
+      target = tgt_idx,
+      value  = df$value,
+      color  = toRGB(nd$color[src_idx + 1], alpha = 0.6)   # colour by source node
     ),
-    frame = ~year
+    frame = if (animate) df$year else NULL
   ) %>%
     layout(
-      title = paste0(paste(reg, collapse = ", "), " ", title, " for ", scen, " scenario"), # TODO: fix when yr is a range
-                     #if_else(animate == T, "", paste0(" in ", yr))),
+      title = paste0(paste(reg, collapse = ", "), " ", title, " – ", scen,
+                     if (!animate) paste0(" (", yr, ")") else ""),
       font = list(size = 11)
     )
 
-  # TODO: the slider needs to be created first, otherwise the animation crashes.
-  if (animate == T) {
+  if (animate) {
     p <- p %>%
-      animation_opts(frame = 2000, redraw = T) %>%
-      animation_slider(currentvalue = list(prefix = "Year ",
-                                           font = list(color = "red")))
+      animation_opts(frame = 2000, redraw = TRUE) %>%
+      animation_slider(currentvalue = list(prefix = "Year "))
   }
-  return(p)
+  p
 }
+
+
+# plot_sankey <- function(df_sankey, nodes, title = "GCAM-USA Sankey Diagram",
+#                         tidy = T, scen = "rcp45cooler_ssp3", yr = 2050,
+#                         animate = F, animateby = year, showFut = T, reg = states) {
+#
+#   # stop if the data has multiple flows
+#   if (any(duplicated(df_sankey))) {
+#     head(repeats(df_sankey))
+#     stop("Data has multiple flows / repeated rows. Please check the data.")
+#   }
+#
+#   # TODO: let animate take year or scenario or c("year", "scenario") as input,
+#   # and change the code accordingly. Set a default to animate over years. Not
+#   # sure how to handle both year and scenario, perhaps by creating two diagrams.
+#
+#   if (tidy) {
+#     df_sankey <- df_sankey %>% rename_water_use_categories() %>% rename_water_source()
+#   }
+#
+#   # complete the data to set the full canvas
+#   if ("scenario" %in% colnames(df_sankey)) {
+#     df_sankey <- as.data.frame(df_sankey) %>%
+#       complete(scenario, year, nesting(source, target), fill = list(value = 0))
+#   } else {
+#     df_sankey <- as.data.frame(df_sankey) %>%
+#       complete(nesting(source, target), fill = list(value = 0)) %>%
+#       mutate(year = yr)
+#   }
+#
+#   # only show future
+#   if (showFut) {
+#     df_sankey <- df_sankey %>% filter(year >= 2020)
+#   }
+#
+#   # filter to US regions
+#   if ("region" %in% colnames(df_sankey)) {
+#     df_sankey <- df_sankey %>% filter(region %in% reg)
+#   } else {
+#     reg <- "USA"   # don't want to print a title with every state abbreviation
+#   }
+#
+#   # filter data if scenario column exists
+#   if ("scenario" %in% colnames(df_sankey)) {
+#     df_sankey <- df_sankey %>% filter(scenario == scen)
+#   }
+#
+#   if (animate == F) {
+#     df_sankey <- df_sankey %>% filter(year == yr)
+#   }
+#
+#   # plot the sankey
+#   p <- plot_ly(
+#     data = df_sankey,
+#     type = "sankey",
+#     arrangement = "snap",
+#     node = list(
+#       # group = 2,
+#       # pad = 15,
+#       # thickness = 20,
+#       label = nodes$node,
+#       color = nodes$color,
+#       line = list(color = "black", width = 0.5)
+#     ),
+#     link = list(
+#       source = match(df_sankey$source, nodes$node) - 1,
+#       target = match(df_sankey$target, nodes$node) - 1,
+#       value = df_sankey$value,
+#       year = df_sankey$year,
+#       color = toRGB(match(df_sankey$source, nodes$node), alpha = .8)
+#     ),
+#     frame = ~year
+#   ) %>%
+#     layout(
+#       title = paste0(paste(reg, collapse = ", "), " ", title, " for ", scen, " scenario"), # TODO: fix when yr is a range
+#                      #if_else(animate == T, "", paste0(" in ", yr))),
+#       font = list(size = 11)
+#     )
+#
+#   # TODO: the slider needs to be created first, otherwise the animation crashes.
+#   if (animate == T) {
+#     p <- p %>%
+#       animation_opts(frame = 2000, redraw = T) %>%
+#       animation_slider(currentvalue = list(prefix = "Year ",
+#                                            font = list(color = "red")))
+#   }
+#   return(p)
+# }
 
 
 # regional strings #############################################################

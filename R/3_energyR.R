@@ -338,22 +338,11 @@ if (FALSE) {
                                by = c("scenario", "region", "year", "sector")) %>%
       mutate(losses = value.in - value.out,
              target = "Losses",
-             source_color = unname(COLORMAP[target]),
-             target_color = unname(COLORMAP[target]),
-             source_position = "input_L1",
-             target_position = "output_L4",
-             source_type = "SECONDARY",
-             target_type = "LOSSES") %>%
+             source_key = sector,
+             target_key = "Losses",
+             source_position = "input_L2") %>%
       select(scenario, region, year, source = sector, target, value = losses,
-             source_color, source_position, source_type, target_color, target_position, target_type)
-
-    refining_loss_long <- refining_loss %>%
-      group_by(scenario, region, year, target, source_color, target_color,
-               source_position, target_position, source_type, target_type) %>%
-      summarize(value = sum(value), .groups = "drop") %>%
-      mutate(source = "Liquid Fuels", level = 1) %>%
-      rbind(refining_loss %>% mutate(level = 2),
-            refining_loss %>% mutate(level = 3))
+             source_position, source_key, target_key)
 
     refined_cons <- simple_sources %>%
       filter(input_L1 == "Liquid Fuels") %>%
@@ -417,8 +406,8 @@ if (FALSE) {
              # some regions. For now, zero those out.
              tech_loss = if_else(tech_loss < 0, 0, tech_loss),
              target = "Losses",
-             source_color = unname(COLORMAP[target]),
-             target_color = unname(COLORMAP[target])) %>%
+             source_key = sector,
+             target_key = "Losses") %>%
       filter(tech_loss > 0)
 
     # TODO: create a downstream flow next to losses saying industrial cogen for now
@@ -436,28 +425,16 @@ if (FALSE) {
       select(scenario, region, year, value = td_loss) %>%
       mutate(source = "Electricity",
              target = "Losses",
-             source_color = unname(COLORMAP[target]),
-             target_color = unname(COLORMAP[target]),
+             source_key = source,
+             target_key = target,
              source_position = "output_L1",
              level = 0)
 
     elec_losses_l1 <- elec_tech_loss %>%
-      group_by(scenario, region, year, input_L2, target, source_color, target_color) %>%
+      group_by(scenario, region, year, input_L2, target, source_key, target_key) %>%
       summarize(value = sum(tech_loss), .groups = "drop") %>%
-      mutate(level = 1,
-             source_position = "input_L2") %>%
+      mutate(level = 1, source_position = "input_L2") %>%
       rename(source = input_L2)
-
-    elec_losses_long <- elec_losses_l1 %>%
-      rbind(elec_losses_l1 %>% mutate(level = 2),
-            elec_tech_loss %>%
-              select(scenario, region, year, source = input_L3, target,
-                     source_color, target_color, value = tech_loss) %>%
-              mutate(level = 3, source_position = "input_L3"),
-            td_losses) %>%
-      mutate(target_position = "output_L4",
-             source_type = "SECONDARY",
-             target_type = "LOSSES")
 
     ## C. Hydrogen ----
     hydrogen_cons <- simple_sources %>%
@@ -473,10 +450,8 @@ if (FALSE) {
       group_by(scenario, year, input_L1) %>%
       summarize(val.prod = sum(value), .groups = "drop") %>%
       left_join(hydrogen_cons %>% select(scenario, region, year, share, target = input_L1), by = c("scenario", "year")) %>%
-      mutate(value = val.prod * share,
-             source_color = unname(COLORMAP[input_L1]),
-             target_color = unname(COLORMAP[target])) %>%
-      select(scenario, region, year, source = input_L1, target, value, source_color, target_color)
+      mutate(value = val.prod * share) %>%
+      select(scenario, region, year, source = input_L1, target, value)
 
     hydrogen_loss <- hydrogen_prod %>%
       group_by(scenario, year) %>%
@@ -489,37 +464,65 @@ if (FALSE) {
              value = share * total_loss,
              source = "Hydrogen",
              target = "Losses",
-             source_color = unname(COLORMAP[target]),
-             target_color = unname(COLORMAP[target])) %>%
-      select(scenario, region, year, source, target, value, source_color, target_color)
+             source_key = source,
+             target_key = "Losses") %>%
+      select(scenario, region, year, source, target, value, source_key, target_key)
 
   }
 
   { ## C. Trade Balancing ----
     energy_tradebal <- primary_en_tradebal %>%
       rbind(refined_trade %>% rename(source = input_L1),
-            elec_bal %>% rename(source = input_L1) %>% select(-td_loss))
+            elec_bal %>% rename(source = input_L1) %>% select(-td_loss)) %>%
+      mutate(source_key = source, target_key = source)
 
     en_imports_long <- energy_tradebal %>%
-      select(scenario, region, year, target = source, value = import) %>%
+      select(scenario, region, year, target = source, value = import, source_key, target_key) %>%
       filter(value > 0) %>%
       mutate(source = paste("Net Imported", target),
              target = if_else(target == "Uranium", "Nuclear", target))
 
     en_exports_long <- energy_tradebal %>%
-      select(scenario, region, year, source, value = export) %>%
+      select(scenario, region, year, source, value = export, source_key, target_key)  %>%
       filter(value > 0) %>%
       mutate(target = paste("Net Exported", source),
              source = if_else(source == "Uranium", "Nuclear", source))
 
     en_tradebal <- rbind(en_imports_long, en_exports_long) %>%
-      mutate(source_color = coalesce(unname(COLORMAP[source]), unname(COLORMAP[target])),
-             target_color = source_color,
-             source_position = if_else(grepl("Net", source), "input_L0", "input_L1"),
+      mutate(source_position = if_else(grepl("Net", source), "input_L0", "input_L1"),
              target_position = if_else(grepl("Net", target), "input_L1", "output_L1"),
              level = 0,
              source_type = if_else(source %in% PRIMARY_EN, "PRIMARY", "SECONDARY"),
              target_type = if_else(target %in% c(SECONDARY_EN, REFINING_TYPE), "SECONDARY", "PRIMARY"))
+  }
+
+  { ## D. Losses ----
+    refining_loss_long <- refining_loss %>%
+      group_by(scenario, region, year, target, source_position, target_key) %>%
+      summarize(value = sum(value), .groups = "drop") %>%
+      mutate(source = "Liquid Fuels", source_key = source, level = 1) %>%
+      rbind(refining_loss %>% mutate(level = 2),
+            refining_loss %>% mutate(level = 3))
+
+    # TODO: hydrogen to losses is all negative on level 0 and exactly 0 elsewhere;
+    #        prob missing USA level production
+    hydrogen_loss_long <- hydrogen_loss %>%
+      mutate(level = 0,
+             value = if_else(value < 0, 0, value),
+             source_position = "input_L2")
+
+    elec_losses_long <- elec_losses_l1 %>%
+      rbind(elec_losses_l1 %>% mutate(level = 2),
+            elec_tech_loss %>%
+              select(scenario, region, year, source = input_L3, target,
+                     source_key, target_key, value = tech_loss) %>%
+              mutate(level = 3, source_position = "input_L3"),
+            td_losses)
+
+    losses <- rbind(refining_loss_long, hydrogen_loss_long, elec_losses_long) %>%
+      mutate(target_position = "output_L4",
+             source_type = "SECONDARY",
+             target_type = "LOSSES")
   }
 
   # !!!!! setting up the long df ----
@@ -528,6 +531,8 @@ if (FALSE) {
     for_display <- simple_sources %>%
       mutate(source_color = COLORMAP[input_L1],
              target_color = COLORMAP[output_L1],
+             source_key = input_L1,
+             target_key = output_L1,
              source_type = case_when(
                input_L1 %in% PRIMARY_EN ~ "PRIMARY",
                input_L1 %in% DEMAND_SECTORS ~ "END USE",
@@ -549,6 +554,8 @@ if (FALSE) {
       filter(output_L1 == "Electricity") %>%
       mutate(source_color = COLORMAP[input_L1],
              target_color = COLORMAP[output_L1],
+             source_key = input_L1,
+             target_key = output_L1,
              source_type = case_when(
                input_L1 %in% PRIMARY_EN ~ "PRIMARY",
                input_L1 %in% DEMAND_SECTORS ~ "END USE",
@@ -604,89 +611,73 @@ if (FALSE) {
       primary_prod_clean %>% mutate(level = 2),
       state_fossil_rsrc %>% mutate(level = 3)
       ) %>%
-      mutate(source_color = unname(COLORMAP[target]),
-             target_color = source_color,
+      mutate(source_key = target,
+             target_key = target,
              source_position = "input_L0",
              target_position = "input_L1",
              source_type = "PRIMARY",
-             target_type = "PRIMARY")
+             target_type = source_type)
 
     # Level 0 is attached to all views rather than repeating in the df
     # the source for hydrogen are currently various primary energy categories;
     # at some point this may change to separate production technologies too
     hydrogen_prod_long <- hydrogen_prod %>%
       mutate(level = 0,
+             source_key = source,
+             target_key = target,
              source_position = "input_L1",
              target_position = "input_L2",
              source_type = "PRIMARY",
              target_type = "SECONDARY")
 
-    # TODO: hydrogen to losses is all negative on level 0 and exactly 0 elsewhere;
-    #        prob missing USA level production
-    hydrogen_loss_long <- hydrogen_loss %>%
-      mutate(level = 0,
-             value = if_else(value < 0, 0, value),
-             source_position = "input_L2",
-             target_position = "output_L4",
-             source_type = "SECONDARY",
-             target_type = "LOSSES")
 
-
-    # if at a low resolution display level this will still have repeats that
-    # need summing by group
+    # combine the display layers with primary energy, hydrogen production, and
+    # losses. Add net energy trade last because it is independent of
+    # display level due to lack of more granular data.
     combo_grp <- rbind(l1_long, l2_long, l3_long,
-                       # add primary/H2 production and losses
-                       primary_en_prod_long,
-                       hydrogen_prod_long,
-                       refining_loss_long,
-                       elec_losses_long,
-                       hydrogen_loss_long,
-                       # then add net energy trade because it is independent of
-                       # display data due to lack of more granular data
-                        en_tradebal) %>%
+                       primary_en_prod_long, hydrogen_prod_long,
+                       losses,
+                       en_tradebal) %>%
       filter(source != target) %>%
       # fix processing sector colors (otherwise biorefining eg has elec,
       # biomass and NG colors because they are inputs and want to only color by
       # the primary input)
-      mutate(#target_color = if_else(target %in% REFINING_TYPE,
-             #                       COLORMAP[source], target_color),
-             #source_color = if_else(source %in% REFINING_TYPE & target != "Losses",
-             #                        COLORMAP[source], source_color),
-             #source_color = if_else(source %in% REFINING_TYPE,
-             #                        COLORMAP[target], source_color),
-             units = "EJ",
-             diagram = "Energy") %>%
-      group_by(scenario, region, year, source, target, source_color, source_position, source_type,
-               target_color, target_position, target_type, level, units, diagram) %>%
+      mutate(units = "EJ", diagram = "Energy") %>%
+      # if at a low resolution display level the df will still have repeats that
+      # need summing by group
+      group_by(scenario, region, year,
+               source, source_key, source_position, source_type,
+               target, target_key, target_position, target_type,
+               level, units, diagram) %>%
       summarize(value = sum(value), .groups = "drop")
 
 
     # Combine source and target to get unique nodes and their colors
-    nodes <- combo_grp %>%
-      select(source, source_color, source_type) %>%
-      distinct() %>%
-      rename(node = source, node_color = source_color, node_pos = source_type) %>%
-      bind_rows(combo_grp %>%
-                  select(target, target_color, target_type) %>%
-                  rename(node = target, node_color = target_color, node_pos = target_type)
-      ) %>%
-      distinct()
-
-    nodes_single <- nodes %>%
+    nodes <- bind_rows(
+      combo_grp %>% distinct(node = source, position = source_position, key = source_key),
+      combo_grp %>% distinct(node = target, position = target_position, key = target_key)
+    ) %>%
+      mutate(role   = classify_node(node, position),
+             sector = classify_sector(key),
+             color  = unname(COLORMAP[color_key(coalesce(key, node))]),
+             # color priority: node's own color > its demand sector > a fuel key > Losses
+             priority = case_when(
+               key == node                    ~ 1L,
+               key %in% DEMAND_SECTORS        ~ 2L,
+               key %in% c(PRIMARY_EN, SECONDARY_EN, REFINING_TYPE) ~ 3L,
+               key == "Losses"                ~ 9L,
+               TRUE                           ~ 5L)) %>%
+      arrange(node, priority) %>%
       group_by(node) %>%
-      filter(n() == 1) %>%
-      ungroup()
+      summarize(role    = first(na.omit(role)),
+                sector  = first(na.omit(sector)),
+                color   = first(na.omit(color)),
+                n_roles = n_distinct(na.omit(role)),
+                .groups = "drop")
 
-    nodes_dups <- nodes %>%
-      group_by(node) %>%
-      filter(n() > 1) %>%
-      ungroup()
-
-    nodes_end <- nodes_dups %>% filter(node_pos == "END USE")
-    nodes_mid <- nodes_dups %>% filter(!(node %in% nodes_end$node), node_pos == "SECONDARY")
-
-    nodes <- rbind(nodes_single, nodes_mid, nodes_end) %>%
-      mutate(rgb = toRGB(node_color, alpha = .9))
+    stopifnot("nodes with conflicting roles" = all(nodes$n_roles == 1),
+              "nodes missing color"          = !any(is.na(nodes$color)))
+    nodes <- nodes %>% select(node, role, sector, color)
 
     # --------------------------------------------------------------------------
     # Write to file ----
@@ -700,34 +691,32 @@ if (FALSE) {
     write_parquet(combo_grp %>% filter(level == 2), "gcam_usa_energy_l2.parquet")
     write_parquet(combo_grp %>% filter(level == 3 | level == 4), "gcam_usa_energy_l3.parquet")
 
+    # write the processed node label info
+    write_parquet(nodes, "gcam_usa_energy_nodes.parquet")
+
     # --------------------------------------------------------------------------
     # Test Display ----
     # --------------------------------------------------------------------------
     # load from pre-processed file
     combo_grp <- read_parquet("gcam_usa_energy.parquet")
+    nodes     <- read_parquet("gcam_usa_energy_nodes.parquet")
 
-    DISPLAY_LEVEL = 3  # TODO: remove after testing
+    DISPLAY_LEVEL <- 1  # TODO: remove after testing
+    FILTER_YEARS  <- 2055
     plot_grp <- combo_grp %>%
       filter(scenario %in% SCENARIO, year %in% FILTER_YEARS, level %in% c(DISPLAY_LEVEL, 0)) %>%
-      group_by(scenario, region, year, source, target, source_color, target_color, source_type, target_type) %>%
+      group_by(scenario, region, year,
+               source, source_key, source_type, source_position,
+               target, target_key, target_type, target_position) %>%
       summarize(value = sum(value), .groups = "drop")
 
     # Usage: single state plotting
-    plot_sankey(plot_grp, paste0("Level ", DISPLAY_LEVEL, " energy flows view"),
-                reg = "CA",
+    plot_sankey(plot_grp, nodes,
+                paste0("Level ", DISPLAY_LEVEL, " energy flows view"),
+                reg = "WA",
                 yr = FILTER_YEARS,
                 scen = SCENARIO,
                 animate = F)
-
-
-    # calculate longest path in filtered nodes
-    # primary energy should align on the x axis
-    # secondary should align on the x axis
-    # net imported should align with primary
-    # net exported should align with end use
-    # more detail should be calculated
-    # things that have the same parent should render next to each other on the y axis
-
 
 
     # TODO: highlight others if i don't understand them
