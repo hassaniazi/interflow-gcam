@@ -299,16 +299,17 @@ make_edges <- function(data, source_col, target_col, level, value_col = "value")
 
 classify_node <- function(node, position) {
   case_when(
-    node == "Losses"                           ~ "losses",
-    grepl("^Net Imported|^Produced ", node)    ~ "net_import",
-    grepl("^Net Exported", node)               ~ "net_export",
-    node %in% c("Electricity", "Liquid Fuels") ~ "carrier",
-    node %in% PRIMARY_EN                       ~ "primary",
-    node %in% c("Hydrogen", REFINING_TYPE)     ~ "transformation",
-    position == "input_L0"                     ~ "net_import",
-    position %in% c("input_L2", "input_L3")    ~ "transformation",
-    grepl("^output_L", position)               ~ "end_use",
-    TRUE                                       ~ NA_character_
+    node == "Losses"                             ~ "losses",
+    grepl("^Produced |^In-State ", node)         ~ "domestic_supply",
+    grepl("^Net Imported|^Out-of-State ", node)  ~ "net_import",
+    grepl("^Net Exported", node)                 ~ "net_export",
+    node %in% c("Electricity", "Liquid Fuels")   ~ "carrier",
+    node %in% PRIMARY_EN                         ~ "primary",
+    node %in% c("Hydrogen", REFINING_TYPE)       ~ "transformation",
+    position == "input_L0"                       ~ "domestic_supply",
+    position %in% c("input_L2", "input_L3")      ~ "transformation",
+    grepl("^output_L", position)                 ~ "end_use",
+    TRUE                                         ~ NA_character_
   )
 }
 
@@ -317,6 +318,293 @@ classify_sector <- function(l1_ancestor) {
             l1_ancestor == "Industry"  ~ "industry",
             l1_ancestor == "Transport" ~ "transport",
             TRUE ~ NA_character_)
+}
+
+# Build a lookup mapping every output_L1..output_L4 node to its L1 sector
+# ("buildings", "industry", "transport") and hierarchical sort path so end_use
+# nodes are always colored by sector and grouped contiguously on the y-axis.
+end_use_sector_lookup <- function(df) {
+  sector_order <- c("buildings" = 1L, "industry" = 2L, "transport" = 3L)
+
+  l1 <- df %>%
+    filter(output_L1 %in% DEMAND_SECTORS) %>%
+    distinct(node = output_L1, l1 = output_L1) %>%
+    mutate(path = l1)
+
+  l2 <- df %>%
+    filter(output_L1 %in% DEMAND_SECTORS, !is.na(output_L2)) %>%
+    distinct(node = output_L2, l1 = output_L1, l2 = output_L2) %>%
+    mutate(path = paste(l1, l2, sep = " > "))
+
+  l3 <- df %>%
+    filter(output_L1 %in% DEMAND_SECTORS, !is.na(output_L3)) %>%
+    distinct(node = output_L3, l1 = output_L1, l2 = output_L2, l3 = output_L3) %>%
+    mutate(path = paste(l1, l2, l3, sep = " > "))
+
+  l4 <- df %>%
+    filter(output_L1 %in% DEMAND_SECTORS, !is.na(output_L4)) %>%
+    distinct(node = output_L4, l1 = output_L1, l2 = output_L2, l3 = output_L3, l4 = output_L4) %>%
+    mutate(path = paste(l1, l2, l3, l4, sep = " > "))
+
+  bind_rows(l1, l2, l3, l4) %>%
+    filter(!(node %in% c(PRIMARY_EN, SECONDARY_EN, REFINING_TYPE, "Losses"))) %>%
+    mutate(sector = classify_sector(l1),
+           sector_rank = unname(sector_order[sector])) %>%
+    arrange(sector_rank, path, node) %>%
+    group_by(node) %>%
+    summarize(sector      = first(na.omit(sector)),
+              sector_rank = first(na.omit(sector_rank)),
+              sort_path   = first(na.omit(path)),
+              .groups     = "drop")
+}
+
+# Compute per-(scenario, region, year) magnitude rank for primary energy nodes.
+compute_primary_rank <- function(edges_df, primary_en = PRIMARY_EN) {
+  edges_df %>%
+    filter(level %in% c(0, 1), source %in% primary_en) %>%
+    group_by(scenario, region, year, node = source) %>%
+    summarize(value = sum(value, na.rm = TRUE), .groups = "drop") %>%
+    complete(nesting(scenario, region, year), node = primary_en, fill = list(value = 0)) %>%
+    group_by(scenario, region, year) %>%
+    arrange(scenario, region, year, desc(value), node) %>%
+    mutate(y_order = as.integer(row_number())) %>%
+    ungroup()
+}
+
+# Compute level-specific x_col_L1..L3 and y_order_L1..L3 for every node.
+assign_layout <- function(nodes_df, edges_df, end_use_lookup) {
+  # Determine which nodes appear at each display level (including level 0 base flows)
+  nodes_in_level <- function(lvl_vec) {
+    e <- edges_df %>% filter(level %in% c(0, lvl_vec))
+    unique(c(e$source, e$target))
+  }
+  present_l1 <- nodes_in_level(1)
+  present_l2 <- nodes_in_level(2)
+  present_l3 <- nodes_in_level(c(3, 4))
+
+  # Map each node to its end_use depth (1..4) when role == "end_use"
+  eu_depth <- edges_df %>%
+    transmute(node = target, pos = target_position) %>%
+    bind_rows(edges_df %>% transmute(node = source, pos = source_position)) %>%
+    filter(grepl("^output_L[1-4]$", pos)) %>%
+    mutate(depth = as.integer(sub("^output_L", "", pos))) %>%
+    group_by(node) %>%
+    summarize(eu_depth = min(depth), .groups = "drop")
+
+  # Traded energy target/source for net_import, domestic_supply, and net_export
+  trade_partner <- edges_df %>%
+    filter(source_position == "input_L0" | grepl("^Net Exported", target)) %>%
+    transmute(
+      trade_node   = if_else(grepl("^Net Exported", target), target, source),
+      partner_node = if_else(grepl("^Net Exported", target), source, target)
+    ) %>%
+    distinct(trade_node, .keep_all = TRUE)
+
+  nd <- nodes_df %>%
+    left_join(eu_depth, by = "node") %>%
+    left_join(end_use_lookup %>% select(node, sector_rank, sort_path), by = "node") %>%
+    left_join(trade_partner, by = c("node" = "trade_node"))
+
+  # Helper to compute x_col for non-trade nodes at a given level (1, 2, or 3)
+  base_x_col <- function(role, node, eu_depth, lvl) {
+    max_col <- if (lvl == 1) 4L else if (lvl == 2) 5L else 7L
+    case_when(
+      role == "primary"        ~ 1L,
+      role == "transformation" ~ 2L,
+      role == "carrier"        ~ 3L,
+      role == "losses"         ~ max_col,
+      role == "end_use" & lvl == 1 ~ 4L,
+      role == "end_use" & lvl == 2 ~ if_else(eu_depth == 1L, 4L, 5L),
+      role == "end_use" & lvl == 3 ~ pmin(3L + coalesce(eu_depth, 1L), 7L),
+      TRUE ~ NA_integer_
+    )
+  }
+
+  nd <- nd %>%
+    mutate(
+      x_col_L1 = base_x_col(role, node, eu_depth, 1),
+      x_col_L2 = base_x_col(role, node, eu_depth, 2),
+      x_col_L3 = base_x_col(role, node, eu_depth, 3)
+    )
+
+  # Resolve trade nodes (net_import / domestic_supply = x_col(partner) - 1,
+  # net_export = x_col(partner) + 1)
+  partner_x <- nd %>%
+    select(partner_node = node,
+           px1 = x_col_L1, px2 = x_col_L2, px3 = x_col_L3)
+
+  nd <- nd %>%
+    left_join(partner_x, by = "partner_node") %>%
+    mutate(
+      x_col_L1 = case_when(
+        role %in% c("net_import", "domestic_supply") ~ px1 - 1L,
+        role == "net_export"                         ~ px1 + 1L,
+        TRUE                                         ~ x_col_L1
+      ),
+      x_col_L2 = case_when(
+        role %in% c("net_import", "domestic_supply") ~ px2 - 1L,
+        role == "net_export"                         ~ px2 + 1L,
+        TRUE                                         ~ x_col_L2
+      ),
+      x_col_L3 = case_when(
+        role %in% c("net_import", "domestic_supply") ~ px3 - 1L,
+        role == "net_export"                         ~ px3 + 1L,
+        TRUE                                         ~ x_col_L3
+      )
+    ) %>%
+    # Mask out levels where a node does not appear
+    mutate(
+      x_col_L1 = if_else(node %in% present_l1, x_col_L1, NA_integer_),
+      x_col_L2 = if_else(node %in% present_l2, x_col_L2, NA_integer_),
+      x_col_L3 = if_else(node %in% present_l3, x_col_L3, NA_integer_)
+    )
+
+  # Global magnitude per node across dataset for default y ordering of primary/transformation
+  node_mag <- bind_rows(
+    edges_df %>% group_by(node = source) %>% summarize(val = sum(value, na.rm = TRUE), .groups = "drop"),
+    edges_df %>% group_by(node = target) %>% summarize(val = sum(value, na.rm = TRUE), .groups = "drop")
+  ) %>%
+    group_by(node) %>%
+    summarize(mag = max(val, na.rm = TRUE), .groups = "drop")
+
+  nd <- nd %>%
+    left_join(node_mag, by = "node") %>%
+    mutate(
+      mag = coalesce(mag, 0),
+      # Role priority within a column so Losses is always 1 (top), then carrier,
+      # primary, transformation, trade, and end_use ordered by sector (buildings -> industry -> transport)
+      role_band = case_when(
+        role == "losses"          ~ 1L,
+        role == "primary"         ~ 2L,
+        role == "net_import"      ~ 3L,
+        role == "domestic_supply" ~ 4L,
+        role == "transformation"  ~ 5L,
+        role == "carrier"         ~ 6L,
+        role == "net_export"      ~ 7L,
+        role == "end_use"         ~ 10L + coalesce(sector_rank, 9L),
+        TRUE                      ~ 99L
+      ),
+      # Refine sub-group so refining technologies stay grouped together in col 2
+      sub_band = case_when(
+        node %in% REFINING_TYPE ~ 1L,
+        node == "Hydrogen"      ~ 2L,
+        TRUE                    ~ 3L
+      )
+    )
+
+  # Assign contiguous 1..N y_order within each (level, x_col)
+  assign_y_for_level <- function(df_in, x_col_name, y_col_name) {
+    active <- df_in %>%
+      filter(!is.na(.data[[x_col_name]])) %>%
+      arrange(.data[[x_col_name]], role_band, sub_band, sort_path, desc(mag), node) %>%
+      group_by(.data[[x_col_name]]) %>%
+      mutate(!!y_col_name := row_number()) %>%
+      ungroup() %>%
+      select(node, all_of(y_col_name))
+
+    df_in %>% left_join(active, by = "node")
+  }
+
+  nd %>%
+    assign_y_for_level("x_col_L1", "y_order_L1") %>%
+    assign_y_for_level("x_col_L2", "y_order_L2") %>%
+    assign_y_for_level("x_col_L3", "y_order_L3") %>%
+    select(node, role, sector, color,
+           x_col_L1, x_col_L2, x_col_L3,
+           y_order_L1, y_order_L2, y_order_L3)
+}
+
+# Validate all layout & coloring requirements across L1, L2, and L3.
+validate_layout <- function(combo_grp, nodes, primary_ranks) {
+  # 1. Edge color check: all edges to Losses have color == COLORMAP["Losses"],
+  #    and all edges have non-NA color.
+  stopifnot("edges missing color" = !any(is.na(combo_grp$color)))
+  losses_edges <- combo_grp %>% filter(target == "Losses")
+  stopifnot("edges to Losses must use Losses color" =
+              all(losses_edges$color == unname(COLORMAP["Losses"])))
+
+  # 2. End-use node sector & color check
+  eu_nodes <- nodes %>% filter(role == "end_use")
+  stopifnot("end_use nodes missing sector" = !any(is.na(eu_nodes$sector)),
+            "end_use nodes must be colored by sector" = all(
+              (eu_nodes$sector == "buildings" & eu_nodes$color == unname(COLORMAP["Buildings"])) |
+              (eu_nodes$sector == "industry"  & eu_nodes$color == unname(COLORMAP["Industry"]))  |
+              (eu_nodes$sector == "transport" & eu_nodes$color == unname(COLORMAP["Transport"]))
+            ))
+
+  # 3. Refining alignment: Oil Refining, Biorefining, Coal to Liquids, Gas to Liquids
+  ref_nodes <- nodes %>% filter(node %in% REFINING_TYPE)
+  stopifnot("refining nodes must align in x_col_L2 == 2" = all(ref_nodes$x_col_L2 == 2L),
+            "refining nodes must align in x_col_L3 == 2" = all(ref_nodes$x_col_L3 == 2L))
+
+  # 4. Primary energy alignment: all primary energy nodes in x_col == 1 across all levels
+  prim_nodes <- nodes %>% filter(role == "primary")
+  stopifnot("primary nodes must be in col 1 at L1" = all(prim_nodes$x_col_L1 == 1L),
+            "primary nodes must be in col 1 at L2" = all(prim_nodes$x_col_L2 == 1L),
+            "primary nodes must be in col 1 at L3" = all(prim_nodes$x_col_L3 == 1L))
+
+  # 5. Per-level checks for L1, L2, L3
+  allowed_feedback_sources <- c("Electricity", "Liquid Fuels", "Hydrogen")
+  level_specs <- list(
+    list(lvls = c(0, 1),    x = "x_col_L1", y = "y_order_L1"),
+    list(lvls = c(0, 2),    x = "x_col_L2", y = "y_order_L2"),
+    list(lvls = c(0, 3, 4), x = "x_col_L3", y = "y_order_L3")
+  )
+
+  for (spec in level_specs) {
+    x_col <- spec$x
+    y_col <- spec$y
+    e_lvl <- combo_grp %>%
+      filter(level %in% spec$lvls) %>%
+      distinct(source, target) %>%
+      left_join(nodes %>% select(source = node, src_role = role, src_x = all_of(x_col), src_y = all_of(y_col)), by = "source") %>%
+      left_join(nodes %>% select(target = node, tgt_role = role, tgt_x = all_of(x_col), tgt_y = all_of(y_col)), by = "target")
+
+    # Losses top-right check
+    max_x <- max(nodes[[x_col]], na.rm = TRUE)
+    loss_nd <- nodes %>% filter(node == "Losses")
+    stopifnot("Losses must be in rightmost column" = loss_nd[[x_col]] == max_x,
+              "Losses must have y_order == 1"      = loss_nd[[y_col]] == 1L)
+
+    # Trade offset check
+    imp_edges <- e_lvl %>% filter(src_role %in% c("net_import", "domestic_supply"))
+    exp_edges <- e_lvl %>% filter(tgt_role == "net_export")
+    stopifnot("import/domestic_supply must be 1 col left of traded energy" =
+                all(imp_edges$src_x == imp_edges$tgt_x - 1L),
+              "net_export must be 1 col right of traded energy" =
+                all(exp_edges$tgt_x == exp_edges$src_x + 1L))
+
+    # No illegal leftward edges check: tgt_x >= src_x unless src is carrier/Hydrogen feeding transformation
+    bad_edges <- e_lvl %>%
+      filter(tgt_x < src_x) %>%
+      filter(!(src_role %in% c("carrier", "transformation") &
+                 source %in% allowed_feedback_sources &
+                 tgt_role == "transformation"))
+    if (nrow(bad_edges) > 0) {
+      stop("Illegal leftward edges at ", x_col, ": ",
+           paste0(bad_edges$source, " (", bad_edges$src_x, ") -> ",
+                  bad_edges$target, " (", bad_edges$tgt_x, ")", collapse = "; "))
+    }
+
+    # End-use sector contiguity check within each column
+    eu_lvl <- nodes %>%
+      filter(role == "end_use", !is.na(.data[[x_col]])) %>%
+      arrange(.data[[x_col]], .data[[y_col]])
+    for (col_val in unique(eu_lvl[[x_col]])) {
+      sub_eu <- eu_lvl %>% filter(.data[[x_col]] == col_val)
+      b_y <- sub_eu %>% filter(sector == "buildings") %>% pull(all_of(y_col))
+      i_y <- sub_eu %>% filter(sector == "industry")  %>% pull(all_of(y_col))
+      t_y <- sub_eu %>% filter(sector == "transport") %>% pull(all_of(y_col))
+      if (length(b_y) && length(i_y)) stopifnot("buildings must precede industry" = max(b_y) < min(i_y))
+      if (length(i_y) && length(t_y)) stopifnot("industry must precede transport" = max(i_y) < min(t_y))
+      if (length(b_y) && length(t_y)) stopifnot("buildings must precede transport" = max(b_y) < min(t_y))
+    }
+  }
+
+  # 6. Primary rank table check
+  stopifnot("primary_ranks non-empty" = nrow(primary_ranks) > 0,
+            "primary_ranks starts at 1" = min(primary_ranks$y_order) == 1L)
+  invisible(TRUE)
 }
 
 COLORMAP <- c(
@@ -373,12 +661,26 @@ plot_sankey <- function(df_sankey, nodes,
     filter(scenario == scen, region %in% reg) %>%
     { if (showFut) filter(., year >= 2020) else . } %>%
     { if (!animate) filter(., year == yr) else . } %>%
-    group_by(scenario, year, source, target) %>%
+    group_by(scenario, year, source, target, source_key, color) %>%
     summarize(value = sum(value), .groups = "drop") %>%
     filter(value > 0)
 
-  if (animate) {  # plotly frames need identical node sets each year
-    df <- complete(df, scenario, year, nesting(source, target), fill = list(value = 0))
+  if (nrow(df) == 0L) {
+    stop("No positive flows for the selected scenario, region, and year.")
+  }
+
+  if (anyNA(df$color)) {
+    stop("Some edges have no colour. Check their source_key values.")
+  }
+
+  if (animate) {
+    df <- df %>%
+      complete(
+        scenario,
+        year,
+        nesting(source, target, source_key, color),
+        fill = list(value = 0)
+      )
   }
 
   # restrict node table to nodes present and fail loudly on anything unmapped
@@ -405,7 +707,7 @@ plot_sankey <- function(df_sankey, nodes,
       source = src_idx,
       target = tgt_idx,
       value  = df$value,
-      color  = toRGB(nd$color[src_idx + 1], alpha = 0.6)   # colour by source node
+      color  = toRGB(df$color, alpha = 0.6) # colour by source node
     ),
     frame = if (animate) df$year else NULL
   ) %>%
@@ -899,7 +1201,6 @@ filter_water_data_by_region <- function(df, region_filter, basin_map) {
   # Combine
   bind_rows(df_resource, df_use)
 }
-
 
 
 # # Exploratory analysis for units

@@ -11,11 +11,6 @@ source("./R/0_functions.R")
 
 # User choices
 UPDATE_DATA    <- FALSE
-PLOTS_ON       <- TRUE
-SCENARIO       <- "rcp45hotter_ssp5"
-FILTER_YEARS   <- 2020
-DISPLAY_LEVEL  <- 2   # int, 1-4 currently; lower value = less detail
-COLOR_LEVEL    <- "DETAILED"
 FUTURE_YEARS   <- 2020:2100
 
 # Primary fuels
@@ -267,7 +262,7 @@ if (FALSE) {
 
     # TODO: separate out biomass and hydrogen trade; currently assume production = consumption
     non_fossil_prod <- simple_sources %>%
-      filter(input_L1 %in% c(RENEWABLES, "Hydrogen")) %>%
+      filter(input_L1 %in% RENEWABLES) %>%
       select(scenario, region, year, source = input_L1, target = output_L1, value)
 
     # attribute nuclearFuel to state where concentrate is produced due to data
@@ -290,7 +285,6 @@ if (FALSE) {
       rename(source = input_L1, target = output_L1) %>%
       # PRIMARY_EN label is specific to resource query so instead exclude
       # secondary and notation sources here
-      # TODO: this might be okay for fossil_mapping now
       filter(source %!in% c(SECONDARY_EN, REFINING_TYPE)) %>%
       group_by(scenario, region, year, source) %>%
       summarize(value.cons = sum(value), .groups = "drop") %>%
@@ -441,32 +435,77 @@ if (FALSE) {
       filter(input_L1 == "Hydrogen") %>%
       group_by(scenario, region, year, input_L1) %>%
       summarize(val.cons = sum(value), .groups = "drop") %>%
+      group_by(scenario, year) %>%
       mutate(total = sum(val.cons),
-             share = val.cons/total)
+             share = if_else(total > 0, val.cons / total, 0)) %>%
+      ungroup()
 
+    # estimate state-level hydrogen production inputs from consumption shares.
+    # in later versions of GCAM there is state-level production broken out
     hydrogen_prod <- usa_only_in %>%
       filter(grepl("H2.*production", sector)) %>%
-      select(-region) %>%
       group_by(scenario, year, input_L1) %>%
       summarize(val.prod = sum(value), .groups = "drop") %>%
-      left_join(hydrogen_cons %>% select(scenario, region, year, share, target = input_L1), by = c("scenario", "year")) %>%
+      inner_join(hydrogen_cons %>%
+                   select(scenario, region, year, share, target = input_L1),
+                 by = c("scenario", "year"), relationship = "many-to-many") %>%
       mutate(value = val.prod * share) %>%
       select(scenario, region, year, source = input_L1, target, value)
 
-    hydrogen_loss <- hydrogen_prod %>%
+    h2_inputs <- usa_only_in %>%
+      filter(grepl("H2.*production", sector)) %>%
       group_by(scenario, year) %>%
-      summarize(val.prod = sum(value), .groups = "drop") %>%
-      left_join(hydrogen_cons %>% select(scenario, region, year, val.cons), by = c("scenario", "year")) %>%
-      mutate(total_cons = sum(val.cons),
-             total_prod = sum(val.prod),
-             total_loss = total_prod - total_cons,
-             share = val.cons / total_cons,
-             value = share * total_loss,
-             source = "Hydrogen",
-             target = "Losses",
-             source_key = source,
-             target_key = "Losses") %>%
-      select(scenario, region, year, source, target, value, source_key, target_key)
+      summarize(val_in = sum(value), .groups = "drop")
+
+    h2_outputs <- usa_only_out %>%
+      filter(grepl("H2.*production", sector)) %>%
+      group_by(scenario, year) %>%
+      summarize(val_out = sum(value), .groups = "drop")
+
+    # national loss by technology -> share of national loss used to split
+    # each state's loss across technologies
+    h2_balance <- full_join(h2_inputs, h2_outputs, by = c("scenario", "year")) %>%
+      replace_na(list(val_in = 0, val_out = 0)) %>%
+      mutate(tech_loss = val_in - val_out) %>%
+      group_by(scenario, year) %>%
+      mutate(loss_share = tech_loss / sum(tech_loss)) %>%
+      ungroup()
+
+    # state loss = state inputs - state consumption, so each state balances
+    h2_state_loss <- hydrogen_prod %>%
+      group_by(scenario, region, year) %>%
+      summarize(val.in = sum(value), .groups = "drop") %>%
+      left_join(hydrogen_cons %>% select(scenario, region, year, val.cons),
+                by = c("scenario", "region", "year")) %>%
+      mutate(state_loss = val.in - val.cons)
+
+    hydrogen_loss <- h2_state_loss %>%
+      inner_join(h2_balance %>% select(scenario, year, loss_share),
+                 by = c("scenario", "year"), relationship = "many-to-many") %>%
+      transmute(
+        scenario, region, year,
+        source = "Hydrogen",
+        target = "Losses",
+        value = state_loss * loss_share,
+        source_key = "Hydrogen",
+        target_key = target
+      )
+
+    # per-state balance check: inputs == consumption + losses
+    h2_check <- h2_state_loss %>%
+      left_join(hydrogen_loss %>%
+                  group_by(scenario, region, year) %>%
+                  summarize(loss = sum(value), .groups = "drop"),
+                by = c("scenario", "region", "year")) %>%
+      mutate(resid = val.in - val.cons - coalesce(loss, 0))
+    if (any(abs(h2_check$resid) > 1e-9)) {
+      stop("Hydrogen not balanced in ", sum(abs(h2_check$resid) > 1e-9),
+           " state-year-scenario rows")
+    }
+    if (any(h2_state_loss$state_loss < -1e-9)) {
+      warning("Negative hydrogen losses in ", sum(h2_state_loss$state_loss < -1e-9),
+              " state-year-scenario rows (USA outputs exceed inputs?)")
+    }
 
   }
 
@@ -504,11 +543,8 @@ if (FALSE) {
       rbind(refining_loss %>% mutate(level = 2),
             refining_loss %>% mutate(level = 3))
 
-    # TODO: hydrogen to losses is all negative on level 0 and exactly 0 elsewhere;
-    #        prob missing USA level production
     hydrogen_loss_long <- hydrogen_loss %>%
       mutate(level = 0,
-             value = if_else(value < 0, 0, value),
              source_position = "input_L2")
 
     elec_losses_long <- elec_losses_l1 %>%
@@ -597,7 +633,7 @@ if (FALSE) {
       make_edges(non_electric_inputs, "input_L1", "input_L3", level = 3),
       make_edges(electric_inputs,"input_L1", "input_L3", level = 3),
       make_edges(non_electric_inputs,"input_L3", "output_L1",level = 3),
-      make_edges(electric_outputs, "input_L3", "output_L1", level = 3,value_col = "val.out"),
+      make_edges(electric_outputs, "input_L3", "output_L1", level = 3, value_col = "val.out"),
       make_edges(for_display,"output_L1", "output_L2",level = 3),
       make_edges(for_display,"output_L2", "output_L3",level = 3),
       make_edges(for_display,"output_L3", "output_L4",level = 4),
@@ -649,8 +685,15 @@ if (FALSE) {
                source, source_key, source_position, source_type,
                target, target_key, target_position, target_type,
                level, units, diagram) %>%
-      summarize(value = sum(value), .groups = "drop")
-
+      summarize(value = sum(value), .groups = "drop") %>%
+      mutate(
+        color = if_else(
+          target == "Losses",
+          unname(COLORMAP["Losses"]),
+          unname(COLORMAP[color_key(coalesce(source_key, source))])
+        )
+      )
+    end_use_lookup <- end_use_sector_lookup(inputs_map)
 
     # Combine source and target to get unique nodes and their colors
     nodes <- bind_rows(
@@ -673,11 +716,20 @@ if (FALSE) {
                 sector  = first(na.omit(sector)),
                 color   = first(na.omit(color)),
                 n_roles = n_distinct(na.omit(role)),
-                .groups = "drop")
+                .groups = "drop") %>%
+      left_join(end_use_lookup %>% select(node, eu_sector = sector), by = "node") %>%
+      mutate(sector = if_else(role == "end_use", coalesce(sector, eu_sector), NA_character_),
+             color  = if_else(role == "end_use", unname(COLORMAP[str_to_title(sector)]), color))
 
     stopifnot("nodes with conflicting roles" = all(nodes$n_roles == 1),
               "nodes missing color"          = !any(is.na(nodes$color)))
-    nodes <- nodes %>% select(node, role, sector, color)
+    nodes <- nodes %>%
+      select(node, role, sector, color) %>%
+      assign_layout(combo_grp, end_use_lookup)
+
+    primary_ranks <- compute_primary_rank(combo_grp, PRIMARY_EN)
+
+    validate_layout(combo_grp, nodes, primary_ranks)
 
     # --------------------------------------------------------------------------
     # Write to file ----
@@ -691,8 +743,9 @@ if (FALSE) {
     write_parquet(combo_grp %>% filter(level == 2), "gcam_usa_energy_l2.parquet")
     write_parquet(combo_grp %>% filter(level == 3 | level == 4), "gcam_usa_energy_l3.parquet")
 
-    # write the processed node label info
+    # write the processed node label and layout info
     write_parquet(nodes, "gcam_usa_energy_nodes.parquet")
+    write_parquet(primary_ranks, "gcam_usa_energy_primary_rank.parquet")
 
     # --------------------------------------------------------------------------
     # Test Display ----
@@ -701,14 +754,11 @@ if (FALSE) {
     combo_grp <- read_parquet("gcam_usa_energy.parquet")
     nodes     <- read_parquet("gcam_usa_energy_nodes.parquet")
 
-    DISPLAY_LEVEL <- 1  # TODO: remove after testing
-    FILTER_YEARS  <- 2055
+    DISPLAY_LEVEL <- 3  # TODO: remove after testing; lower value less detail
+    SCENARIO      <- "rcp45hotter_ssp5"
+    FILTER_YEARS  <- 2030
     plot_grp <- combo_grp %>%
-      filter(scenario %in% SCENARIO, year %in% FILTER_YEARS, level %in% c(DISPLAY_LEVEL, 0)) %>%
-      group_by(scenario, region, year,
-               source, source_key, source_type, source_position,
-               target, target_key, target_type, target_position) %>%
-      summarize(value = sum(value), .groups = "drop")
+      filter(scenario %in% SCENARIO, year %in% FILTER_YEARS, level %in% c(DISPLAY_LEVEL, 0))
 
     # Usage: single state plotting
     plot_sankey(plot_grp, nodes,

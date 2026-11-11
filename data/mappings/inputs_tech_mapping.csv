@@ -131,6 +131,7 @@ H2 central production,biomass,biomass to H2 CCS,regional biomass,Biomass,Biomass
 H2 central production,biomass,biomass to H2,regional biomass,Biomass,Central Production,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
 H2 central production,coal,coal chemical CCS,regional coal,Coal,Chemical CCS,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
 H2 central production,gas,natural gas steam reforming,regional natural gas,Natural Gas,Steam Reforming,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
+H2 central production,gas,natural gas steam reforming CCS,regional natural gas,Natural Gas,Steam Reforming CCS,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
 H2 central production,nuclear,thermal splitting,nuclearFuelGenIII,Nuclear,Thermal Splitting,Central Production,Hydrogen,Hydrogen,Hydrogen,Hydrogen
 H2 enduse,H2 distribution,H2 distribution,H2 distribution,Distribution,Distribution,Distribution,Hydrogen,Hydrogen,Hydrogen,Hydrogen
 H2 enduse,H2 forecourt production,H2 forecourt production,H2 forecourt production,Forecourt,Forecourt,Forecourt,Hydrogen,Hydrogen,Hydrogen,Hydrogen
