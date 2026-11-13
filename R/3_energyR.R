@@ -248,22 +248,53 @@ if (FALSE) {
     filter(output_L1 != input_L1)
 
 
+  ## HYDROGEN PRODUCTION APPORTIONING ----------
+  # computed before primary energy so H2 production inputs (biomass, coal,
+  # natural gas, nuclear) are included in the primary energy accounting
+  {
+    hydrogen_cons <- simple_sources %>%
+      filter(input_L1 == "Hydrogen") %>%
+      group_by(scenario, region, year, input_L1) %>%
+      summarize(val.cons = sum(value), .groups = "drop") %>%
+      group_by(scenario, year) %>%
+      mutate(total = sum(val.cons),
+             share = if_else(total > 0, val.cons / total, 0)) %>%
+      ungroup()
+
+    # estimate state-level hydrogen production inputs from consumption shares.
+    # in later versions of GCAM there is state-level production broken out
+    hydrogen_prod <- usa_only_in %>%
+      filter(grepl("H2.*production", sector)) %>%
+      group_by(scenario, year, input_L1) %>%
+      summarize(val.prod = sum(value), .groups = "drop") %>%
+      inner_join(hydrogen_cons %>%
+                   select(scenario, region, year, share, target = input_L1),
+                 by = c("scenario", "year"), relationship = "many-to-many") %>%
+      mutate(value = val.prod * share) %>%
+      select(scenario, region, year, source = input_L1, target, value)
+  }
+
   ## PRIMARY ENERGY PROCESSING ------------------
   {
+    # thermal splitting for H2 production is not on the state level in this
+    # GCAM version, so use the state-apportioned nuclear H2 inputs instead
     uranium_cons <- simple_sources %>%
-      # thermal splitting for H2 production not on the state level in this GCAM
-      # version so have to add back in the USA region before filtering inputs
-      # TODO: add in hydrogen production here??
-      rbind(usa_only_in) %>%
       filter(grepl("nuclear", input)) %>%
-      group_by(scenario, region, year, source = input_L1) %>%
+      select(scenario, region, year, value) %>%
+      rbind(hydrogen_prod %>%
+              filter(source == "Nuclear") %>%
+              select(scenario, region, year, value)) %>%
+      group_by(scenario, region, year) %>%
       summarize(value.cons = sum(value), .groups = "drop") %>%
       mutate(source = "Uranium")
 
     # TODO: separate out biomass and hydrogen trade; currently assume production = consumption
     non_fossil_prod <- simple_sources %>%
       filter(input_L1 %in% RENEWABLES) %>%
-      select(scenario, region, year, source = input_L1, target = output_L1, value)
+      select(scenario, region, year, source = input_L1, target = output_L1, value) %>%
+      rbind(hydrogen_prod %>%
+              filter(source %in% RENEWABLES) %>%
+              select(scenario, region, year, source, target, value))
 
     # attribute nuclearFuel to state where concentrate is produced due to data
     # availability and to simplify the supply chain representation; if future
@@ -273,18 +304,26 @@ if (FALSE) {
       select(region, year, value.mmlb = non_us) %>%
       distinct()
 
+    # national uranium consumption by scenario and year
+    uranium_us_cons <- uranium_cons %>%
+      group_by(scenario, year, source) %>%
+      summarize(us_cons = sum(value.cons), .groups = "drop")
+
     uranium_prod <- uranium_sources %>%
-      select(region, frac_state) %>%
       # use 2025 state production fractions for all future years; update if new
       # data become available
-      left_join(uranium_cons, by = "region") %>%
-      mutate(value.prod = sum(value.cons) * frac_state) %>%
+      distinct(region, frac_state) %>%
+      cross_join(uranium_us_cons) %>%
+      mutate(value.prod = us_cons * frac_state) %>%
       select(scenario, region, year, source, value.prod)
 
     primary_en_cons <- simple_sources %>%
       rename(source = input_L1, target = output_L1) %>%
       # PRIMARY_EN label is specific to resource query so instead exclude
       # secondary and notation sources here
+      select(scenario, region, year, source, value) %>%
+      # include state-apportioned hydrogen production inputs
+      rbind(hydrogen_prod %>% select(scenario, region, year, source, value)) %>%
       filter(source %!in% c(SECONDARY_EN, REFINING_TYPE)) %>%
       group_by(scenario, region, year, source) %>%
       summarize(value.cons = sum(value), .groups = "drop") %>%
@@ -431,27 +470,8 @@ if (FALSE) {
       rename(source = input_L2)
 
     ## C. Hydrogen ----
-    hydrogen_cons <- simple_sources %>%
-      filter(input_L1 == "Hydrogen") %>%
-      group_by(scenario, region, year, input_L1) %>%
-      summarize(val.cons = sum(value), .groups = "drop") %>%
-      group_by(scenario, year) %>%
-      mutate(total = sum(val.cons),
-             share = if_else(total > 0, val.cons / total, 0)) %>%
-      ungroup()
-
-    # estimate state-level hydrogen production inputs from consumption shares.
-    # in later versions of GCAM there is state-level production broken out
-    hydrogen_prod <- usa_only_in %>%
-      filter(grepl("H2.*production", sector)) %>%
-      group_by(scenario, year, input_L1) %>%
-      summarize(val.prod = sum(value), .groups = "drop") %>%
-      inner_join(hydrogen_cons %>%
-                   select(scenario, region, year, share, target = input_L1),
-                 by = c("scenario", "year"), relationship = "many-to-many") %>%
-      mutate(value = val.prod * share) %>%
-      select(scenario, region, year, source = input_L1, target, value)
-
+    # hydrogen_cons and hydrogen_prod are computed before primary energy
+    # processing (see HYDROGEN PRODUCTION APPORTIONING above)
     h2_inputs <- usa_only_in %>%
       filter(grepl("H2.*production", sector)) %>%
       group_by(scenario, year) %>%
@@ -738,9 +758,9 @@ if (FALSE) {
       # currently not displaying cooler scenarios for brevity so keep out of input
       # files to reduce load times
       filter(grepl("hotter", scenario)) %>%
-      select(-c(source_key, target_key, source_type, target_type)) %>%
+      select(-c(target_key, source_type, target_type)) %>%
       select(scenario, ssp, rcp, region, year,
-             source, source_position,
+             source, source_position, source_key,
              target, target_position,
              level, value, color, units, diagram)
 
@@ -748,14 +768,13 @@ if (FALSE) {
     # --------------------------------------------------------------------------
     # Write to file ----
     # --------------------------------------------------------------------------
-    #write.csv(combo_grp, "gcam_usa_energy.csv", row.names = FALSE)
     write_parquet(condensed, "gcam_usa_energy.parquet")
 
     # write level files separately to improve load times
     write_parquet(condensed %>% filter(level == 0), "gcam_usa_energy_l0.parquet")
     write_parquet(condensed %>% filter(level == 1), "gcam_usa_energy_l1.parquet")
     write_parquet(condensed %>% filter(level == 2), "gcam_usa_energy_l2.parquet")
-    write_parquet(condensed %>% filter(level == 3 | level == 4), "gcam_usa_energy_l3.parquet")
+    write_parquet(condensed %>% filter(level == 3), "gcam_usa_energy_l3.parquet")     # | level == 4
 
     # write the processed node label and layout info
     write_parquet(nodes, "gcam_usa_energy_nodes.parquet")
