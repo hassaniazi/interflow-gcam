@@ -19,6 +19,12 @@
 #   "arrow"
 # ))
 
+#install.packages("devtools")   # if you don't already have it
+
+#devtools::install_github("JGCRI/jgcricolors")
+devtools::install_github("JGCRI/gcamdata")
+#devtools::install_github("JGCRI/rgcam")
+
 library(arrow)    # reading parquet
 library(dplyr)    # data manipulation
 library(tidyr)    # reshaping data
@@ -123,13 +129,16 @@ targets_L3 <- sort(unique(energy_df_L3$target))
 
 
 # 2.2.1.1 - Electricity Generation ----
+
+#TODO: this actually isn't elec gen at all (it's energy inputs for elec gen)
+
 # Let's start with the most aggregate sankey data (i.e. Level 1)
 elec_gen_df_L1 <- energy_df_L1 %>%
-  filter(target == "Electricity") %>%
+  filter(source == "Electricity") %>%
   select(-c("source_color","target_color","level","diagram")) %>%
   group_by(scenario,region,year) %>%
   mutate(value = sum(value)) %>%
-  select(-source) %>%
+  select(-target) %>%
   distinct() %>%
   ungroup()
 
@@ -269,7 +278,7 @@ rank_change %>%
     title = paste("Change in state electricity rank,", scenario_sel,
                   "from", start_year, "to", end_year),
     x = "State (region)",
-    y = "Rank change (end - start)"
+    y = "Rank change (start - end)"
   ) +
   theme_minimal()
 
@@ -319,18 +328,211 @@ ggplot(rank_change_all,
 
 
 
+# 2.2.1.2 - Industrial Energy Consumption ----
+
+# Let's start with the most aggregate sankey data (i.e. Level 1)
+industry_df_L1 <- energy_df_L1 %>%
+  filter(target == "Industry") %>%
+  select(-c("source_color","target_color","level","diagram")) %>%
+  group_by(scenario,region,year) %>%
+  mutate(value = sum(value)) %>%
+  select(-source) %>%
+  distinct() %>%
+  ungroup()
+
+#Select Scenario for single-scenario visualizations
+scen_select <- "rcp45cooler_ssp3"
+#Select year for single year visualizations:
+year_select <- 2050
+
+# Plot a Single Scenario Heat Map
+ggplot(industry_df_L1 %>% filter(scenario == scen_select),
+       aes(x = year,
+           y = region,
+           fill = value)) +
+  geom_tile(color = "grey80") +
+  scale_fill_viridis_c(option = "C",
+                       #Use a nonlinear transformation (sqrt or log)
+                       #to spread the lower values
+                       trans = "sqrt"   # or "log10"
+  ) +
+  labs(
+    title = paste("Energy Inputs to Industry by state and year -", scen_select),
+    x = "Year",
+    y = "State (region)",
+    fill = "Value (EJ)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 6)
+  )
+
+# Plot a multi-scenario heat map
+ggplot(industry_df_L1 #%>% filter_out(region == "TX")
+       ,
+       aes(x = year,
+           y = region,
+           fill = value)) +
+  geom_tile(color = "grey80") +
+  scale_fill_viridis_c(
+    option = "C",
+    trans = "sqrt"   # or "log10"
+  ) +
+  facet_wrap(~ scenario) +     #toggle this line to facet by scenario
+  labs(
+    title = "Energy Inputs to Industry by state, year, and scenario (sqrt scale)",
+    x = "Year",
+    y = "State (region)",
+    fill = "Value (EJ)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 6))
+
+# Plotting USA Heatmap for scenario and year
+# prep df with earlier inputs
+ind_sel <- industry_df_L1 %>%
+  filter(scenario == scen_select,
+         year     == year_select)
+# Map region abbreviations -> state names
+state_lookup <- data.frame(
+  region     = state.abb,
+  state_name = tolower(state.name),
+  stringsAsFactors = FALSE
+)
+state_vals_named_ind <- ind_sel %>%
+  left_join(state_lookup, by = "region")
+
+# Check any regions that didn't match (e.g., DC, PR)
+missing <- state_vals_named %>%
+  filter(is.na(state_name))
+if (nrow(missing) > 0) {
+  print(missing)
+}
+# Get US map data and join
+us_map <- map_data("state") %>%
+  rename(state_name = region)
+map_df_ind <- us_map %>%
+  left_join(state_vals_named_ind, by = "state_name")
+# 5. Plot the map
+ggplot(map_df_ind, aes(x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill = value), color = "white", linewidth = 0.2) +
+  coord_fixed(1.3) +
+  scale_fill_viridis_c(option = "C",
+                       trans = "sqrt"   # or "log10"
+  ) +
+  labs(
+    title = paste("Energy Inputs to Industry by state -", scen_select, "year", year_select),
+    fill  = "Value (EJ)"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(hjust = 0.5)
+  )
+
+## Data frame Comparing National Rankings
+
+# Start by selecting the years to compare
+start_year <- 2020
+end_year   <- 2050
+
+# filter L1 ind datafram for the 2 comparison years, and calculate ranks
+ind_rank_two_years <- industry_df_L1 %>%
+  filter(year %in% c(start_year, end_year)) %>%
+  group_by(scenario, year) %>%
+  mutate(
+    rank = rank(-value, ties.method = "min")  # descending: largest value gets rank 1
+  ) %>%
+  ungroup()
+
+# calculate how the rank has changed from the start year to end year
+rank_change_ind <- ind_rank_two_years %>%
+  group_by(scenario, region) %>%
+  summarize(
+    rank_start = rank[year == start_year],
+    rank_end   = rank[year == end_year],
+    .groups    = "drop"
+  ) %>%
+  mutate(rank_diff = rank_start - rank_end)
+
+# visualization for the change "rank" for 1 scenario
+scenario_sel <- "rcp45cooler_ssp3"
+rank_change_ind %>%
+  filter(scenario == scenario_sel) %>%
+  ggplot(aes(x = reorder(region, rank_diff),
+             y = rank_diff)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = paste("Change in state industrial energy use rank,", scenario_sel,
+                  "from", start_year, "to", end_year),
+    x = "State (region)",
+    y = "Rank change (end - start)"
+  ) +
+  theme_minimal()
+
+# Looking across scenarios at average and variability of rank diff per region:
+rank_change_ind_summary <- rank_change_ind %>%
+  group_by(region) %>%
+  summarize(
+    mean_rank_diff = mean(rank_diff, na.rm = TRUE),
+    sd_rank_diff   = sd(rank_diff, na.rm = TRUE),
+    min_rank_diff  = min(rank_diff, na.rm = TRUE),
+    max_rank_diff  = max(rank_diff, na.rm = TRUE),
+    n_scenarios    = n(),
+    .groups        = "drop"
+  )
 
 
+# consistency of direction (gainers vs losers)
+rank_change_ind_direction <- rank_change_ind %>%
+  group_by(region) %>%
+  summarize(
+    n_up   = sum(rank_diff > 0, na.rm = TRUE),  # # scenarios where rank improved (moved up)
+    n_down = sum(rank_diff < 0, na.rm = TRUE),  # # where rank worsened
+    n_zero = sum(rank_diff == 0, na.rm = TRUE),
+    .groups = "drop"
+  )
 
+# Putting all the info into 1
+rank_change_ind_all <- rank_change_ind_summary %>%
+  left_join(rank_change_ind_direction, by = "region")
 
+# Visualizing this info:
+ggplot(rank_change_ind_all,
+       aes(x = mean_rank_diff,
+           y = sd_rank_diff,
+           label = region)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey60") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey60") +
+  geom_text(size = 3, vjust = -0.5) +
+  labs(
+    title = paste("State rank change in industrial energy use, across scenarios",
+                  "(from", start_year, "to", end_year, ")"),
+    x = "Mean rank change (start - end, negative = moves down)",
+    y = "SD of rank change across scenarios"
+  ) +
+  theme_minimal()
 
+#### Plot Sankeys ----
+source("./R/0_functions.R")
+library(plotly)
+# load from pre-processed file
+combo_grp <- read_parquet("gcam_usa_energy.parquet")
+nodes     <- read_parquet("gcam_usa_energy_nodes.parquet")
 
+DISPLAY_LEVEL <- 3  # TODO: remove after testing; lower value less detail
+SCENARIO      <- "rcp45hotter_ssp5"
+FILTER_YEARS  <- 2030
+plot_grp <- combo_grp %>%
+  filter(scenario %in% SCENARIO, year %in% FILTER_YEARS, level %in% c(DISPLAY_LEVEL, 0))
 
-
-
-
-
-
-
-
+# Usage: single state plotting
+plot_sankey(plot_grp, nodes,
+            paste0("Level ", DISPLAY_LEVEL, " energy flows view"),
+            reg = "WA",
+            yr = FILTER_YEARS,
+            scen = SCENARIO,
+            animate = F)
 
