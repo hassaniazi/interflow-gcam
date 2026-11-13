@@ -22,7 +22,7 @@
 #install.packages("devtools")   # if you don't already have it
 
 #devtools::install_github("JGCRI/jgcricolors")
-devtools::install_github("JGCRI/gcamdata")
+#devtools::install_github("JGCRI/gcamdata")
 #devtools::install_github("JGCRI/rgcam")
 
 library(arrow)    # reading parquet
@@ -143,12 +143,12 @@ elec_gen_df_L1 <- energy_df_L1 %>%
   ungroup()
 
 #Select Scenario for single-scenario visualizations
-scen_select <- "rcp45cooler_ssp5"
+scen_select_elec <- "rcp45cooler_ssp5"
 #Select year for single year visualizations:
-year_select <- 2025
+year_select_elec <- 2025
 
 # Plot a Single Scenario Heat Map
-ggplot(elec_gen_df_L1 %>% filter(scenario == scen_select),
+ggplot(elec_gen_df_L1 %>% filter(scenario == scen_select_elec),
        aes(x = year,
            y = region,
            fill = value)) +
@@ -159,7 +159,7 @@ ggplot(elec_gen_df_L1 %>% filter(scenario == scen_select),
                        trans = "sqrt"   # or "log10"
   ) +
   labs(
-    title = paste("Electricity gen by state and year -", scen_select),
+    title = paste("Electricity gen by state and year -", scen_select_elec),
     x = "Year",
     y = "State (region)",
     fill = "Value (EJ)"
@@ -192,19 +192,19 @@ ggplot(elec_gen_df_L1,
 # Plotting USA Heatmap for scenario and year
 # prep df with earlier inputs
 elec_sel <- elec_gen_df_L1 %>%
-  filter(scenario == scen_select,
-         year     == year_select)
+  filter(scenario == scen_select_elec,
+         year     == year_select_elec)
 # Map region abbreviations -> state names
 state_lookup <- data.frame(
   region     = state.abb,
   state_name = tolower(state.name),
   stringsAsFactors = FALSE
 )
-state_vals_named <- elec_sel %>%
+state_vals_named_elec <- elec_sel %>%
   left_join(state_lookup, by = "region")
 
 # Check any regions that didn't match (e.g., DC, PR)
-missing <- state_vals_named %>%
+missing <- state_vals_named_elec %>%
   filter(is.na(state_name))
 if (nrow(missing) > 0) {
   print(missing)
@@ -212,17 +212,17 @@ if (nrow(missing) > 0) {
 # Get US map data and join
 us_map <- map_data("state") %>%
   rename(state_name = region)
-map_df <- us_map %>%
-  left_join(state_vals_named, by = "state_name")
+map_df_elec <- us_map %>%
+  left_join(state_vals_named_elec, by = "state_name")
 # 5. Plot the map
-ggplot(map_df, aes(x = long, y = lat, group = group)) +
+ggplot(map_df_elec, aes(x = long, y = lat, group = group)) +
   geom_polygon(aes(fill = value), color = "white", linewidth = 0.2) +
   coord_fixed(1.3) +
   scale_fill_viridis_c(option = "C",
                        trans = "sqrt"   # or "log10"
   ) +
   labs(
-    title = paste("Electricity gen by state -", scen_select, "year", year_select),
+    title = paste("Electricity gen by state -", scen_select_elec, "year", year_select_elec),
     fill  = "Value (EJ)"
   ) +
   theme_void() +
@@ -341,12 +341,12 @@ industry_df_L1 <- energy_df_L1 %>%
   ungroup()
 
 #Select Scenario for single-scenario visualizations
-scen_select <- "rcp45cooler_ssp3"
+scen_select_ind <- "rcp45cooler_ssp3"
 #Select year for single year visualizations:
-year_select <- 2050
+year_select_ind <- 2050
 
 # Plot a Single Scenario Heat Map
-ggplot(industry_df_L1 %>% filter(scenario == scen_select),
+ggplot(industry_df_L1 %>% filter(scenario == scen_select_ind),
        aes(x = year,
            y = region,
            fill = value)) +
@@ -357,7 +357,7 @@ ggplot(industry_df_L1 %>% filter(scenario == scen_select),
                        trans = "sqrt"   # or "log10"
   ) +
   labs(
-    title = paste("Energy Inputs to Industry by state and year -", scen_select),
+    title = paste("Energy Inputs to Industry by state and year -", scen_select_ind),
     x = "Year",
     y = "State (region)",
     fill = "Value (EJ)"
@@ -391,8 +391,8 @@ ggplot(industry_df_L1 #%>% filter_out(region == "TX")
 # Plotting USA Heatmap for scenario and year
 # prep df with earlier inputs
 ind_sel <- industry_df_L1 %>%
-  filter(scenario == scen_select,
-         year     == year_select)
+  filter(scenario == scen_select_ind,
+         year     == year_select_ind)
 # Map region abbreviations -> state names
 state_lookup <- data.frame(
   region     = state.abb,
@@ -403,7 +403,7 @@ state_vals_named_ind <- ind_sel %>%
   left_join(state_lookup, by = "region")
 
 # Check any regions that didn't match (e.g., DC, PR)
-missing <- state_vals_named %>%
+missing <- state_vals_named_ind %>%
   filter(is.na(state_name))
 if (nrow(missing) > 0) {
   print(missing)
@@ -421,7 +421,7 @@ ggplot(map_df_ind, aes(x = long, y = lat, group = group)) +
                        trans = "sqrt"   # or "log10"
   ) +
   labs(
-    title = paste("Energy Inputs to Industry by state -", scen_select, "year", year_select),
+    title = paste("Energy Inputs to Industry by state -", scen_select_ind, "year", year_select_ind),
     fill  = "Value (EJ)"
   ) +
   theme_void() +
@@ -514,6 +514,19 @@ ggplot(rank_change_ind_all,
     y = "SD of rank change across scenarios"
   ) +
   theme_minimal()
+
+
+# 2.2.1.2 - Electricity generation reliance on fossil fuel supplies ----
+
+# Let's start with the most aggregate sankey data (i.e. Level 1)
+elec_gen_df_L1 <- energy_df_L1 %>%
+  filter(source == "Electricity") %>%
+  select(-c("source_color","target_color","level","diagram")) %>%
+  group_by(scenario,region,year) %>%
+  mutate(value = sum(value)) %>%
+  select(-target) %>%
+  distinct() %>%
+  ungroup()
 
 #### Plot Sankeys ----
 source("./R/0_functions.R")
