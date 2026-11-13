@@ -303,9 +303,9 @@ classify_node <- function(node, position) {
     grepl("^Produced |^In-State ", node)         ~ "domestic_supply",
     grepl("^Net Imported|^Out-of-State ", node)  ~ "net_import",
     grepl("^Net Exported", node)                 ~ "net_export",
-    node %in% c("Electricity", "Liquid Fuels")   ~ "carrier",
+    node %in% c("Electricity", "Liquid Fuels", "Hydrogen") ~ "carrier",
     node %in% PRIMARY_EN                         ~ "primary",
-    node %in% c("Hydrogen", REFINING_TYPE)       ~ "transformation",
+    node %in% REFINING_TYPE                      ~ "transformation",
     position == "input_L0"                       ~ "domestic_supply",
     position %in% c("input_L2", "input_L3")      ~ "transformation",
     grepl("^output_L", position)                 ~ "end_use",
@@ -362,11 +362,11 @@ end_use_sector_lookup <- function(df) {
 compute_primary_rank <- function(edges_df, primary_en = PRIMARY_EN) {
   edges_df %>%
     filter(level %in% c(0, 1), source %in% primary_en) %>%
-    group_by(scenario, region, year, node = source) %>%
+    group_by(scenario, ssp, rcp, region, year, node = source) %>%
     summarize(value = sum(value, na.rm = TRUE), .groups = "drop") %>%
-    complete(nesting(scenario, region, year), node = primary_en, fill = list(value = 0)) %>%
-    group_by(scenario, region, year) %>%
-    arrange(scenario, region, year, desc(value), node) %>%
+    complete(nesting(scenario, ssp, rcp, region, year), node = primary_en, fill = list(value = 0)) %>%
+    group_by(scenario, ssp, rcp, region, year) %>%
+    arrange(scenario, ssp, rcp, region, year, desc(value), node) %>%
     mutate(y_order = as.integer(row_number())) %>%
     ungroup()
 }
@@ -484,11 +484,15 @@ assign_layout <- function(nodes_df, edges_df, end_use_lookup) {
         role == "end_use"         ~ 10L + coalesce(sector_rank, 9L),
         TRUE                      ~ 99L
       ),
-      # Refine sub-group so refining technologies stay grouped together in col 2
+      # Refine sub-group so refining technologies stay grouped together in col 2,
+      # and carriers in col 3 are ordered Electricity -> Liquid Fuels -> Hydrogen
+      # (Hydrogen always directly below Liquid Fuels)
       sub_band = case_when(
         node %in% REFINING_TYPE ~ 1L,
-        node == "Hydrogen"      ~ 2L,
-        TRUE                    ~ 3L
+        node == "Electricity"   ~ 1L,
+        node == "Liquid Fuels"  ~ 2L,
+        node == "Hydrogen"      ~ 3L,
+        TRUE                    ~ 4L
       )
     )
 
@@ -574,7 +578,8 @@ validate_layout <- function(combo_grp, nodes, primary_ranks) {
               "net_export must be 1 col right of traded energy" =
                 all(exp_edges$tgt_x == exp_edges$src_x + 1L))
 
-    # No illegal leftward edges check: tgt_x >= src_x unless src is carrier/Hydrogen feeding transformation
+    # No illegal leftward edges check: tgt_x >= src_x unless src is a carrier
+    # (Electricity, Liquid Fuels, Hydrogen) feeding a transformation node
     bad_edges <- e_lvl %>%
       filter(tgt_x < src_x) %>%
       filter(!(src_role %in% c("carrier", "transformation") &

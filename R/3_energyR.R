@@ -662,7 +662,7 @@ if (FALSE) {
              source_key = source,
              target_key = target,
              source_position = "input_L1",
-             target_position = "input_L2",
+             target_position = "output_L1",
              source_type = "PRIMARY",
              target_type = "SECONDARY")
 
@@ -675,24 +675,27 @@ if (FALSE) {
                        losses,
                        en_tradebal) %>%
       filter(source != target) %>%
-      # fix processing sector colors (otherwise biorefining eg has elec,
-      # biomass and NG colors because they are inputs and want to only color by
-      # the primary input)
-      mutate(units = "EJ", diagram = "Energy") %>%
       # if at a low resolution display level the df will still have repeats that
       # need summing by group
       group_by(scenario, region, year,
                source, source_key, source_position, source_type,
                target, target_key, target_position, target_type,
-               level, units, diagram) %>%
+               level) %>%
       summarize(value = sum(value), .groups = "drop") %>%
       mutate(
         color = if_else(
           target == "Losses",
           unname(COLORMAP["Losses"]),
-          unname(COLORMAP[color_key(coalesce(source_key, source))])
-        )
+          unname(COLORMAP[color_key(coalesce(source_key, source))])),
+        units = "EJ",
+        diagram = "Energy",
+        year = as.integer(year),
+        level = as.integer(level),
+        ssp = str_extract(scenario, "[^_]+$"),
+        rcp = str_extract(scenario,  "^.*?\\d{2}"),
+        value = round(value, 6)
       )
+
     end_use_lookup <- end_use_sector_lookup(inputs_map)
 
     # Combine source and target to get unique nodes and their colors
@@ -731,17 +734,28 @@ if (FALSE) {
 
     validate_layout(combo_grp, nodes, primary_ranks)
 
+    condensed <- combo_grp %>%
+      # currently not displaying cooler scenarios for brevity so keep out of input
+      # files to reduce load times
+      filter(grepl("hotter", scenario)) %>%
+      select(-c(source_key, target_key, source_type, target_type)) %>%
+      select(scenario, ssp, rcp, region, year,
+             source, source_position,
+             target, target_position,
+             level, value, color, units, diagram)
+
+
     # --------------------------------------------------------------------------
     # Write to file ----
     # --------------------------------------------------------------------------
     #write.csv(combo_grp, "gcam_usa_energy.csv", row.names = FALSE)
-    write_parquet(combo_grp, "gcam_usa_energy.parquet")
+    write_parquet(condensed, "gcam_usa_energy.parquet")
 
     # write level files separately to improve load times
-    write_parquet(combo_grp %>% filter(level == 0), "gcam_usa_energy_l0.parquet")
-    write_parquet(combo_grp %>% filter(level == 1), "gcam_usa_energy_l1.parquet")
-    write_parquet(combo_grp %>% filter(level == 2), "gcam_usa_energy_l2.parquet")
-    write_parquet(combo_grp %>% filter(level == 3 | level == 4), "gcam_usa_energy_l3.parquet")
+    write_parquet(condensed %>% filter(level == 0), "gcam_usa_energy_l0.parquet")
+    write_parquet(condensed %>% filter(level == 1), "gcam_usa_energy_l1.parquet")
+    write_parquet(condensed %>% filter(level == 2), "gcam_usa_energy_l2.parquet")
+    write_parquet(condensed %>% filter(level == 3 | level == 4), "gcam_usa_energy_l3.parquet")
 
     # write the processed node label and layout info
     write_parquet(nodes, "gcam_usa_energy_nodes.parquet")
@@ -750,20 +764,22 @@ if (FALSE) {
     # --------------------------------------------------------------------------
     # Test Display ----
     # --------------------------------------------------------------------------
+    source("./R/0_functions.R")      # TODO: remove after testing
     # load from pre-processed file
-    combo_grp <- read_parquet("gcam_usa_energy.parquet")
+    condensed <- read_parquet("gcam_usa_energy.parquet")
     nodes     <- read_parquet("gcam_usa_energy_nodes.parquet")
 
     DISPLAY_LEVEL <- 3  # TODO: remove after testing; lower value less detail
     SCENARIO      <- "rcp45hotter_ssp5"
     FILTER_YEARS  <- 2030
-    plot_grp <- combo_grp %>%
+    STATE         <- "IL"
+    plot_grp <- condensed %>%
       filter(scenario %in% SCENARIO, year %in% FILTER_YEARS, level %in% c(DISPLAY_LEVEL, 0))
 
     # Usage: single state plotting
     plot_sankey(plot_grp, nodes,
                 paste0("Level ", DISPLAY_LEVEL, " energy flows view"),
-                reg = "WA",
+                reg = STATE,
                 yr = FILTER_YEARS,
                 scen = SCENARIO,
                 animate = F)
