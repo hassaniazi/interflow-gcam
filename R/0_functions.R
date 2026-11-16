@@ -629,7 +629,7 @@ COLORMAP <- c(
   "Biomass"         = "#117733",
   "Hydrogen"        = "#00A7A7",
   "Hydropower"      = "#0072B2",
-  "Coal"            = "#362312",  # TODO: make more separate from losses color
+  "Coal"            = "#362312",
   "Oil"             = "#8d4e28",
   "Natural Gas"     = "#D6B588",
 
@@ -647,14 +647,100 @@ COLORMAP <- c(
   # demand colors depend on L1 sectors
   "Buildings"       = "#4E79A7",
   "Industry"        = "#CC6677",
-  "Transport"       = "#A6D854"#,
-
-  # cooling technologies
- # "Dry Cooling"     = "",
-#  "Recirculating"   = "",
-
-
+  "Transport"       = "#A6D854"
 )
+
+# water sector color palette
+WATER_COLORMAP <- c(
+  # water sources
+  "Surface Water"   = "#1f78b4",
+  "runoff"          = "#1f78b4",
+  "Groundwater"     = "#6a3d9a",
+  "groundwater"     = "#6a3d9a",
+  "Desalination"    = "#33a02c",
+  "desalination"    = "#33a02c",
+
+  # use categories
+  "Irrigation Water Use"   = "#b2df8a",
+  "water_td_irr_W"         = "#b2df8a",
+  "Livestock Water Use"    = "#fb9a99",
+  "water_td_an_W"          = "#fb9a99",
+  "Domestic Water Use"     = "#a6cee3",
+  "water_td_dom_W"         = "#a6cee3",
+  "Industrial Water Use"   = "#CC6677",
+  "water_td_ind_W"         = "#CC6677",
+  "Electricity Water Use"  = "#F0E442",
+  "water_td_elec_W"        = "#F0E442",
+  "Mining Water Use"       = "#8d4e28",
+  "water_td_pri_W"         = "#8d4e28",
+
+  # electricity gen techs (reuse energy colors)
+  "coal (conv pul)"        = "#362312",
+  "coal (IGCC)"            = "#362312",
+  "gas (CC)"               = "#87CEEB",
+  "gas (steam/CT)"         = "#87CEEB",
+  "refined liquids (CC)"   = "#D55E00",
+  "refined liquids (steam/CT)" = "#D55E00",
+  "biomass (conv)"         = "#117733",
+  "biomass (IGCC)"         = "#117733",
+  "Gen_II_LWR"             = "#884488",
+  "Gen_III"                = "#884488",
+  "CSP"                    = "#ffe28a",
+  "CSP_storage"            = "#ffe28a",
+  "geothermal"             = "#FF6600",
+  "nuclear"                = "#884488",
+
+  # cooling techs
+  "once through"           = "#e31a1c",
+  "recirculating"          = "#1f78b4",
+  "dry cooling"            = "#ff7f00",
+  "cooling pond"           = "#cab2d6",
+  "seawater"               = "#6baed6",
+
+  # crops
+  "Corn"            = "#e6ab02",
+  "Wheat"           = "#d4b062",
+  "Rice"            = "#b5cf6b",
+  "Soybean"         = "#8ca252",
+  "FodderHerb"      = "#637939",
+  "FodderGrass"     = "#4a7c59",
+  "OtherGrain"      = "#c7c783",
+  "MiscCrop"        = "#a1a864",
+  "SugarCrop"       = "#9ecae1",
+  "Vegetables"      = "#e7969c",
+  "Fruits"          = "#d62728",
+  "NutsSeeds"       = "#bcbd22",
+  "OilCrop"         = "#dbdb8d",
+  "FiberCrop"       = "#aec7e8",
+  "biomassGrass"    = "#117733",
+  "biomassTree"     = "#2ca02c",
+  "RootTuber"       = "#c49c94",
+  "Legumes"         = "#98df8a",
+
+  # livestock
+  "Beef"            = "#d62728",
+  "Dairy"           = "#9467bd",
+  "Pork"            = "#e377c2",
+  "Poultry"         = "#ff9896",
+  "SheepGoat"       = "#c5b0d5",
+
+  # municipal/industrial end uses
+  "municipal water" = "#a6cee3",
+  "industry"        = "#CC6677",
+
+  # mining end uses
+  "regional coal"          = "#362312",
+  "regional natural gas"   = "#87CEEB",
+  "regional oil"           = "#8d4e28",
+  "unconventional oil production" = "#8d4e28",
+  "nuclearFuelGenII"       = "#884488",
+  "nuclearFuelGenIII"      = "#884488",
+
+  # conveyance losses
+  "Conveyance Losses" = "#999999"
+)
+
+ALL_COLORMAP <- c(COLORMAP, WATER_COLORMAP)
 COLOR_LEVELS <- names(COLORMAP)
 
 # map a node or edge key to its COLORMAP entry
@@ -664,7 +750,19 @@ color_key <- function(key) {
   if_else(k == "Uranium", "Nuclear", k)
 }
 
-plot_sankey <- function(df_sankey, nodes,
+# plot_sankey serves two calling conventions:
+#   plot_sankey(edges, nodes, ...)  edge table + node table (energy layout)
+#   plot_sankey(flows, title, ...)  source-target flow table (water, energy-water)
+plot_sankey <- function(df_sankey, ...) {
+  args <- list(...)
+  if ("nodes" %in% names(args) || (length(args) > 0 && is.data.frame(args[[1]]))) {
+    plot_sankey_nodes(df_sankey, ...)
+  } else {
+    plot_sankey_flows(df_sankey, ...)
+  }
+}
+
+plot_sankey_nodes <- function(df_sankey, nodes,
                         title = "GCAM-USA Sankey Diagram",
                         scen = "rcp45cooler_ssp3", yr = 2050, reg = states,
                         animate = FALSE, showFut = TRUE) {
@@ -735,6 +833,167 @@ plot_sankey <- function(df_sankey, nodes,
       animation_slider(currentvalue = list(prefix = "Year "))
   }
   p
+}
+
+plot_sankey_flows <- function(df_sankey, title = "GCAM-USA Sankey Diagram", tidy = T,
+                        scen = "rcp45cooler_ssp3", yr = 2050,
+                        animate = F, animateby = year, showFut = T, reg = states) {
+
+  # stop if the data has multiple flows
+  if (any(duplicated(df_sankey))) {
+    head(repeats(df_sankey))
+    stop("Data has multiple flows / repeated rows. Please check the data.")
+  }
+
+  # TODO: let animate take year or scenario or c("year", "scenario") as input,
+  # and change the code accordingly. Set a default to animate over years. Not
+  # sure how to handle both year and scenario, perhaps by creating two diagrams.
+
+  if (tidy) {
+    df_sankey <- df_sankey %>% rename_water_use_categories() %>% rename_water_source()
+  }
+
+  # complete the data to set the full canvas
+  if ("scenario" %in% colnames(df_sankey)) {
+    df_sankey <- as.data.frame(df_sankey) %>%
+      complete(scenario, year, nesting(source, target), fill = list(value = 0))
+  } else {
+    df_sankey <- as.data.frame(df_sankey) %>%
+      complete(nesting(source, target), fill = list(value = 0)) %>%
+      mutate(year = yr)
+  }
+
+  # generate node label before filtering
+  node_labels <- unique(c(as.character(df_sankey$source), as.character(df_sankey$target)))
+
+  # only show future
+  if (showFut) {
+    df_sankey <- df_sankey %>% filter(year >= 2020)
+  }
+
+  # filter to US regions
+  if ("region" %in% colnames(df_sankey)) {
+    df_sankey <- df_sankey %>% filter(region %in% reg)
+    # df_sankey <- df_sankey %>% filter(region %in% all_regions | region %in% reg)
+  } else {
+    reg <- "USA"   # don't want to print a title with every state abbreviation
+  }
+
+  # # always keep USA, Mexico, and Canada if they are in the region column. Filter based on US states passed on the reg argument
+  # if ("region" %in% colnames(df_sankey)) {
+  #   df_sankey_reg_all <- df_sankey %>% filter(region %in% c("USA", "Mexico", "Canada") | region %in% reg)
+  #
+  #   df_sankey_reg_state <- df_sankey_reg_all %>% filter(region %in% c("") | region %in% reg)
+  #
+  #   # if the target column of df_sankey contains strings in source column of df_sankey_reg, then filter to those
+  #   df_sankey_reg_f <- df_sankey_reg_all %>% filter(target %in% unique(df_sankey_reg_state$source))
+  #   # df_sankey_reg_f_e <- df_sankey %>% filter(source %in% unique(df_sankey_reg_f$target))
+  #   df_sankey <- rbind(df_sankey_reg_f, df_sankey_reg_state) %>% unique()
+  #
+  # }
+  #
+  #
+  # # complete the data to set the full canvas
+  # df_sankey <- as.data.frame(df_sankey) %>%
+  #   complete(scenario, year, nesting(source, target), fill = list(value = 0))
+  #
+  # # generate node label after filtering
+  # node_labels <- unique(c(as.character(df_sankey$source), as.character(df_sankey$target)))
+
+
+
+  # filter basins in source column that are in target column
+  # if ("source" %in% colnames(df_sankey) && "target" %in% colnames(df_sankey)) {
+  #   df_sankey <- df_sankey %>%
+  #     filter(source %in% df_sankey$target)
+  # }
+
+  # # filter region if it is specified
+  # if (length(reg) > 0) {
+  #   df_sankey <- df_sankey %>% filter(region %in% reg)
+  # }
+
+  # if ("region" %in% colnames(df_sankey)) {
+  #   df_sankey <- df_sankey %>% filter(region == reg)
+  # }
+
+  # filter data if scenario column exists
+  if ("scenario" %in% colnames(df_sankey)) {
+    df_sankey <- df_sankey %>% filter(scenario == scen)
+  }
+
+  if (animate == F) {
+    df_sankey <- df_sankey %>% filter(year == yr)
+  }
+
+  # colors are optional; use them if present, otherwise auto-assign from ALL_COLORMAP
+  has_colors <- "source_color" %in% colnames(df_sankey) & "target_color" %in% colnames(df_sankey)
+
+  if (has_colors) {
+    nodes <- df_sankey %>%
+      select(source, source_color) %>% distinct() %>%
+      rename(node = source, node_color = source_color) %>%
+      bind_rows(df_sankey %>%
+                  select(target, target_color) %>%
+                  rename(node = target, node_color = target_color)) %>%
+      distinct()
+    node_colors <- toRGB(nodes$node_color[match(node_labels, nodes$node)], alpha = .9)
+    link_colors <- toRGB(df_sankey$source_color, alpha = .4)
+  } else {
+    # auto-assign colors from combined colormap
+    default_col <- "#7f7f7f"
+    node_colors <- toRGB(
+      sapply(node_labels, function(n) {
+        # try exact match first, then partial match on key substrings
+        if (n %in% names(ALL_COLORMAP)) return(ALL_COLORMAP[n])
+        partial <- names(ALL_COLORMAP)[sapply(names(ALL_COLORMAP), function(k) grepl(k, n, fixed = TRUE))]
+        if (length(partial) > 0) return(ALL_COLORMAP[partial[1]])
+        return(default_col)
+      }), alpha = .9)
+    # link color follows source node
+    link_colors <- toRGB(
+      sapply(df_sankey$source, function(s) {
+        if (s %in% names(ALL_COLORMAP)) return(ALL_COLORMAP[s])
+        partial <- names(ALL_COLORMAP)[sapply(names(ALL_COLORMAP), function(k) grepl(k, s, fixed = TRUE))]
+        if (length(partial) > 0) return(ALL_COLORMAP[partial[1]])
+        return(default_col)
+      }), alpha = .4)
+  }
+
+  # plot the sankey
+  p <- plot_ly(
+    data = df_sankey,
+    type = "sankey",
+    arrangement = "snap",
+    node = list(
+      label = node_labels,
+      color = node_colors,
+      line = list(color = "black", width = 0.5)
+    ),
+    link = list(
+      source = match(df_sankey$source, node_labels) - 1,
+      target = match(df_sankey$target, node_labels) - 1,
+      value = df_sankey$value,
+      year = df_sankey$year,
+      color = link_colors
+    ),
+    frame = ~year
+  ) %>%
+    layout(
+      title = paste0(paste(reg, collapse = ", "), " ", title, " for ", scen, " scenario",
+                     if_else(animate == T, "", paste0(" in ", yr))),
+      font = list(size = 11)
+    )
+
+  # TODO: the slider needs to be created first, otherwise the below animation
+  # crashes.
+  if (animate == T) {
+    p <- p %>%
+      animation_opts(frame = 2000, redraw = T) %>%
+      animation_slider(currentvalue = list(prefix = "Year ",
+                                           font = list(color = "red")))
+  }
+  return(p)
 }
 
 
