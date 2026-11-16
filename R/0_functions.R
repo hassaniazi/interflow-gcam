@@ -16,6 +16,8 @@
   library(DT)
   library(igraph)
   library(ggraph)
+  library(visNetwork)
+  library(arrow)
 }
 
 
@@ -26,16 +28,21 @@ output_dir <- "output/"
 img_dir <- "img/"
 shiny_dir <- "shiny/"
 
-# filters the repeated rows
-repeats <- function(df) {
-  df %>% group_by(across(everything())) %>%
-    filter(n() > 1) %>% ungroup()
-}
+
+# bools ########################################################################
+PLOTS_ON    <- TRUE
+SAVE_FILES  <- FALSE
+
 
 # helper functions #############################################################
 
 '%!in%' <- function(x,y)!('%in%'(x,y))
 
+# filters the repeated rows
+repeats <- function(df) {
+  df %>% group_by(across(everything())) %>%
+    filter(n() > 1) %>% ungroup()
+}
 
 remove_source_equals_target <- function(df, source_col = "source", target_col = "target") {
   df %>% filter(!!sym(source_col) != !!sym(target_col)) # Keep rows where source != target
@@ -57,7 +64,7 @@ combine_elec_period <- function(df, col = sector) {
   df %>% mutate({{ col }} := gsub(pattern, "", {{ col }}))
 }
 
-# clean up functions ####################################################################
+# clean up functions ###########################################################
 
 # function to gather_years and filter by one year
 gather_year_filt <- function(df, year_filt = 2025) {

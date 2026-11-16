@@ -3,9 +3,6 @@
 # Authors: Maggie Liu, Hassan Niazi
 # Feb 2026
 
-library("visNetwork")
-library("arrow")
-
 # 0. Setup ----------------------------------------------------------------
 source("./R/0_functions.R")
 
@@ -33,8 +30,8 @@ DEMAND_SECTORS <- c("Industry", "Buildings", "Transport")
 options(scipen = 999)
 DB_NAME        <- 'database_rcp85hotter_ssp5'
 DB_PATH        <- 'data'
-PROJ           <- "data\\im3scen_energy1.dat"
-QUERIES        <- 'data\\queries_ewflows.xml'
+PROJ           <- "im3scen_energy1.dat"
+QUERIES        <- 'queries_ewflows.xml'
 
 ## . get db ----
 if (UPDATE_DATA) {                           # run new queries, or
@@ -43,9 +40,9 @@ if (UPDATE_DATA) {                           # run new queries, or
                      scenario = NULL,
                      proj = PROJ,
                      clobber = TRUE,
-                     queryFile = QUERIES)
+                     queryFile = paste0(data_dir, QUERIES))
 } else {                                     # read in from existing .dat
-  prj <- loadProject(proj = PROJ)
+  prj <- loadProject(proj = paste0(data_dir, PROJ))
   listScenarios(prj)
   listQueries(prj)
 }
