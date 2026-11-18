@@ -750,7 +750,8 @@ if (FALSE) {
       write_parquet(condensed %>% filter(level == 0), out_parquet("energy_l0"))
       write_parquet(condensed %>% filter(level == 1), out_parquet("energy_l1"))
       write_parquet(condensed %>% filter(level == 2), out_parquet("energy_l2"))
-      write_parquet(condensed %>% filter(level == 3), out_parquet("energy_l3"))     # | level == 4
+      # level 4 (sub end uses) only extends level 3, so it ships in the level 3 file
+      write_parquet(condensed %>% filter(level %in% c(3, 4)), out_parquet("energy_l3"))
 
       # write the processed node label and layout info
       write_parquet(nodes, out_parquet("energy_nodes"))

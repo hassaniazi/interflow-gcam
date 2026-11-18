@@ -99,6 +99,13 @@ energy_water_nodes <- bind_rows(
 if (UPDATE_DATA) write_parquet(energy_water, out_parquet("energy_water"))
 if (UPDATE_DATA) write_parquet(energy_water_nodes, out_parquet("energy_water_nodes"))
 
+# the dashboard draws energy-water level k from the energy level files plus
+# these water rows, so the energy rows are not shipped twice
+if (UPDATE_DATA) for (lvl in 1:3) {
+  write_parquet(energy_water %>% filter(diagram == "Water", level == lvl),
+                out_parquet(paste0("energy_water_l", lvl)))
+}
+
 
 # plot -------------------------------------------------------------------------
 plot_energy_water_sankey <- function(reg = "CA", scen = "rcp45hotter_ssp5", yr = 2050,

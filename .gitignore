@@ -39,7 +39,7 @@ vignettes/*.pdf
 .Renviron
 
 # my custom ignores
-output/*
+# output/*
 img/
 x*.R
 # *.html
