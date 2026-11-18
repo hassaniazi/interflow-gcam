@@ -32,6 +32,91 @@ shiny_dir <- "shiny/"
 # bools ########################################################################
 PLOTS_ON    <- TRUE
 SAVE_FILES  <- FALSE
+UPDATE_DATA <- FALSE     # TRUE: re-run the energy queries against the database
+
+
+# input and output files #######################################################
+# energy
+DB_NAME          <- "database_rcp85hotter_ssp5"
+DB_PATH          <- "data"
+# TODO: merge these two dat files 
+PROJ_ENERGY      <- paste0(data_dir, "im3scen_energy1.dat")
+PROJ_WATER       <- paste0(data_dir, "im3scen_epri.dat")
+QUERIES_ENERGY   <- paste0(data_dir, "queries_ewflows.xml")
+INPUTS_MAP_FILE  <- paste0(data_dir, "mappings/inputs_tech_mapping.csv")
+FOSSIL_PROD_FILE <- paste0(data_dir, "GCAMUSA_fossil_resource_production.csv")
+FOSSIL_VINT_FILE <- paste0(data_dir, "ref_res_prod_by_tech_vin.csv")
+SEDS_FILE        <- paste0(data_dir, "seds_2024.csv")
+SEDS_RAW_FILE    <- paste0(data_dir, "complete_seds_2024/complete_seds.csv")
+SEDS_CODES_FILE  <- paste0(data_dir, "complete_seds_2024/seds_codes.csv")
+URANIUM_PROD_FILE     <- paste0(data_dir, "qupd_tbl1_uranium_quarterly_25.csv")
+URANIUM_PURCHASE_FILE <- paste0(data_dir, "umartableS1afigureS1.csv")
+URANIUM_SOURCES_FILE  <- paste0(data_dir, "uranium_sources.csv")
+
+# water
+IRR_EFF_FILE     <- paste0(data_dir, "ag_IrrEff_R.csv")
+
+# processed tables for the dashboard, e.g. out_parquet("energy_l1")
+out_parquet <- function(name) paste0(output_dir, "gcam_usa_", name, ".parquet")
+
+
+# constants ####################################################################
+options(scipen = 999)
+FUTURE_YEARS   <- 2020:2100
+
+# Primary fuels
+RENEWABLES     <- c("Nuclear", "Wind", "Solar", "Biomass", "Hydropower", "Geothermal")
+FOSSIL_FUELS   <- c("Coal", "Oil", "Natural Gas")
+PRIMARY_EN     <- c(FOSSIL_FUELS, RENEWABLES)
+FOSSIL_MAPPING <- c("coal", "crude oil", "unconventional oil", "natural gas")
+
+# Secondary fuels
+SECONDARY_EN   <- c("Electricity", "Liquid Fuels", "Hydrogen")
+REFINING_TYPE  <- c("Oil Refining", "Biorefining", "Coal to Liquids", "Gas to Liquids")
+ELEC_LOADTYPE  <- c("superpeak", "subpeak", "peak", "baseload", "intermediate")
+# TODO: bring a file, left join for all regions possible in future
+TD_IO          <- 1.06237346267644    # 2021 USA I:O value for L126.IO_R_electd_F_Yh
+
+# End use
+DEMAND_SECTORS <- c("Industry", "Buildings", "Transport")
+
+# Water
+# municipal withdrawals split between homes and businesses (USGS circular 1441)
+MUNICIPAL_SPLIT <- c("Residential" = 0.60, "Commercial" = 0.40)
+
+# crop groups for the aggregated water levels. Corn, OilCrop and the bioenergy
+# crops stay separate because they feed Corn Ethanol, Biodiesel and Biomass on
+# the energy side; crops not listed here are "Other Crops".
+BIOENERGY_CROPS <- c("biomassGrass", "biomassTree")
+CROP_GROUPS <- c(
+  "Corn"         = "Corn",
+  "OilCrop"      = "OilCrop",
+  "biomassGrass" = "Bioenergy Crops",
+  "biomassTree"  = "Bioenergy Crops",
+  "Wheat"        = "Grains",
+  "Rice"         = "Grains",
+  "OtherGrain"   = "Grains",
+  "FodderHerb"   = "Fodder Crops",
+  "FodderGrass"  = "Fodder Crops"
+)
+
+# water end uses that are the same activity as an energy node at every level
+EW_COMMON_NODES <- c(
+  "regional coal"                 = "Coal",
+  "regional natural gas"          = "Natural Gas",
+  "regional oil"                  = "Oil",
+  "crude oil"                     = "Oil",
+  "unconventional oil production" = "Oil",
+  "nuclearFuelGenII"              = "Nuclear",
+  "nuclearFuelGenIII"             = "Nuclear",
+  "enrichedUranium"               = "Nuclear",
+  "biomassGrass"                  = "Biomass",
+  "biomassTree"                   = "Biomass",
+  "Bioenergy Crops"               = "Biomass"
+)
+
+# crops whose harvest is partly a biofuel feedstock: crop -> biofuel node
+CROP_BIOFUEL <- c("Corn" = "Corn Ethanol", "OilCrop" = "Biodiesel")
 
 
 # helper functions #############################################################
@@ -190,7 +275,7 @@ remove_month_day_night_superpeak <- function(df, column_name) {
   return(df)
 }
 
-cooling_techs <- c(" \\(once through\\)", " \\(dry cooling\\)", " \\(seawater\\)", " \\(recirculating\\)", " \\(cooling pond\\)")
+cooling_techs <- c(" \\(once through\\)", " \\(dry cooling\\)", " \\(seawater\\)", " \\(recirculating\\)", " \\(cooling pond\\)", " \\(dry_hybrid\\)")
 cooling_techs_years <- c(" \\(pre_1970\\)", " \\(1970s\\)", " \\(1980s\\)", " \\(1990s\\)", " \\(2000s\\)", " \\(2010s\\)", " \\(retire 2020\\)")
 
 # remove cooling tech string from a column, so Gen_III (once through) becomes Gen_III
@@ -217,6 +302,13 @@ remove_hi_lo <- function(df, col = technology) {
 swap_source_target <- function(df) {
   df <- df %>% rename("source" = "target", "target" = "source")
   return(df)
+}
+
+# add up flows that share a source and target
+sum_flows <- function(df) {
+  df %>%
+    group_by(scenario, region, source, target, year, units) %>%
+    summarise(value = sum(value), .groups = "drop")
 }
 
 
@@ -717,6 +809,13 @@ WATER_COLORMAP <- c(
   "RootTuber"       = "#c49c94",
   "Legumes"         = "#98df8a",
 
+  # crop groups of the aggregated water levels
+  "Crops"           = "#b5cf6b",
+  "Grains"          = "#d4b062",
+  "Fodder Crops"    = "#637939",
+  "Other Crops"     = "#a1a864",
+  "Bioenergy Crops" = "#117733",
+
   # livestock
   "Beef"            = "#d62728",
   "Dairy"           = "#9467bd",
@@ -726,6 +825,8 @@ WATER_COLORMAP <- c(
 
   # municipal/industrial end uses
   "municipal water" = "#a6cee3",
+  "Residential"     = "#a6cee3",
+  "Commercial"      = "#a6cee3",
   "industry"        = "#CC6677",
 
   # mining end uses
@@ -742,6 +843,18 @@ WATER_COLORMAP <- c(
 
 ALL_COLORMAP <- c(COLORMAP, WATER_COLORMAP)
 COLOR_LEVELS <- names(COLORMAP)
+
+# colour of a node: its exact colormap entry, else the first entry contained in
+# its name, else grey
+node_color <- function(x) {
+  keys <- names(ALL_COLORMAP)
+  u <- unique(x)
+  col <- sapply(u, function(n) {
+    hit <- c(keys[keys == n], keys[str_detect(n, fixed(keys))])
+    if (length(hit)) ALL_COLORMAP[[hit[1]]] else "#7f7f7f"
+  })
+  unname(col[match(x, u)])
+}
 
 # map a node or edge key to its COLORMAP entry
 # (e.g. "Net Exported Coal" -> "Coal", "Produced Uranium" -> "Nuclear")

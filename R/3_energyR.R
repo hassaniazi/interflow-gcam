@@ -4,63 +4,41 @@
 # Feb 2026
 
 # 0. Setup ----------------------------------------------------------------
+# user choices, constants and file paths are set in 0_functions.R
 source("./R/0_functions.R")
 
-# User choices
-UPDATE_DATA    <- FALSE
-FUTURE_YEARS   <- 2020:2100
-
-# Primary fuels
-RENEWABLES     <- c("Nuclear", "Wind", "Solar", "Biomass", "Hydropower", "Geothermal")
-FOSSIL_FUELS   <- c("Coal", "Oil", "Natural Gas")
-PRIMARY_EN     <- c(FOSSIL_FUELS, RENEWABLES)
-FOSSIL_MAPPING <- c("coal", "crude oil", "unconventional oil", "natural gas")
-
-# Secondary fuels
-SECONDARY_EN   <- c("Electricity", "Liquid Fuels", "Hydrogen")
-REFINING_TYPE  <- c("Oil Refining", "Biorefining", "Coal to Liquids", "Gas to Liquids")
-ELEC_LOADTYPE  <- c("superpeak", "subpeak", "peak", "baseload", "intermediate")
-# TODO: bring a file, left join for all regions possible in future
-TD_IO          <- 1.06237346267644    # 2021 USA I:O value for L126.IO_R_electd_F_Yh
-
-# End use
-DEMAND_SECTORS <- c("Industry", "Buildings", "Transport")
-
 # 1. Load data ------------------------------------------------------------
-options(scipen = 999)
-DB_NAME        <- 'database_rcp85hotter_ssp5'
-DB_PATH        <- 'data'
-PROJ           <- "im3scen_energy1.dat"
-QUERIES        <- 'queries_ewflows.xml'
-
 ## . get db ----
+# TODO: ideally fold this into the query_im3_scen() function and merge both water 
+# and energy .dat into one file (so there's a one standard entry point for all GCAM
+# versions down the line)
 if (UPDATE_DATA) {                           # run new queries, or
   conn <- localDBConn(DB_PATH, DB_NAME)
   prj <- addScenario(conn,
                      scenario = NULL,
-                     proj = PROJ,
+                     proj = PROJ_ENERGY,
                      clobber = TRUE,
-                     queryFile = paste0(data_dir, QUERIES))
+                     queryFile = QUERIES_ENERGY)
 } else {                                     # read in from existing .dat
-  prj <- loadProject(proj = paste0(data_dir, PROJ))
+  prj <- loadProject(proj = PROJ_ENERGY)
   listScenarios(prj)
   listQueries(prj)
 }
 
 { ## . get mappings ----
-  inputs_map       <- read_csv(paste0(data_dir, "./mappings/inputs_tech_mapping.csv"))
-  fossil_prod      <- read_csv(paste0(data_dir, "/GCAMUSA_fossil_resource_production.csv"))
-  seds_2024        <- read_csv(paste0(data_dir, "/seds_2024.csv"))
-  uranium_2025     <- read_csv(paste0(data_dir, "/qupd_tbl1_uranium_quarterly_25.csv"), skip = 7)
-  uranium_purchase <- read_csv(paste0(data_dir, "/umartableS1afigureS1.csv"), skip = 7)
-  uranium_sources  <- read_csv(paste0(data_dir, "/uranium_sources.csv"))
+  inputs_map       <- read_csv(INPUTS_MAP_FILE)
+  fossil_prod      <- read_csv(FOSSIL_PROD_FILE)
+  seds_2024        <- read_csv(SEDS_FILE)
+  uranium_2025     <- read_csv(URANIUM_PROD_FILE, skip = 7)
+  uranium_purchase <- read_csv(URANIUM_PURCHASE_FILE, skip = 7)
+  uranium_sources  <- read_csv(URANIUM_SOURCES_FILE)
 }
 
 ##. remake fossil resource mapping, default has this turned off and instead
 ##  uses the presaved processed file
 if (FALSE) {
   # resource production by tech and vintage
-  fossil_vint <- read_csv(paste0(data_dir, "ref_res_prod_by_tech_vin.csv"), skip = 1)
+  fossil_vint <- read_csv(FOSSIL_VINT_FILE, skip = 1)
   fossil_prod <- fossil_vint %>%
     # "PV_resource", "CSP_resource", "distributed_solar" also included by state
     # in this query. it might be helpful to save them in the future, especially
@@ -74,11 +52,11 @@ if (FALSE) {
     mutate(year = if_else(year == 2021, 2020, year)) %>%
     group_by(scenario, region, resource, subresource, year) %>%
     summarize(value = sum(value), .groups = "drop")
-  write_csv(fossil_prod, paste0(data_dir, "/GCAMUSA_fossil_resource_production.csv"))
+  write_csv(fossil_prod, FOSSIL_PROD_FILE)
 
   # do the same pre-processing for SEDS
-  seds_complete_2024 <- read_csv(paste0(data_dir, "/complete_seds_2024/complete_seds.csv"))
-  seds_codes <- read_csv(paste0(data_dir, "/complete_seds_2024/seds_codes.csv"))
+  seds_complete_2024 <- read_csv(SEDS_RAW_FILE)
+  seds_codes <- read_csv(SEDS_CODES_FILE)
 
   seds_2024 <- seds_complete_2024 %>%
     # HYTCP: Hydroelectricity total net generation
@@ -91,7 +69,7 @@ if (FALSE) {
     # reporting value for selected codes is million kWh, convert to EJ for GCAM
     mutate(value = Data * 3.6E-6) %>%
     select(region = StateCode, year = Year, description = Description, value)
-  write_csv(seds_2024, paste0(data_dir, "/seds_2024.csv"))
+  write_csv(seds_2024, SEDS_FILE)
 
   # downscale uranium for nuclear as it is not on the state level in IM3 GCAMUSA
   # data is from EIA Domestic Uranium Production Quarterly Report, Table 1
@@ -118,7 +96,7 @@ if (FALSE) {
            non_us = total - us_origin,
            frac_state = value.mmlb / (us_origin + non_us)) %>%
     select(region, year, value.mmlb, us_origin, non_us, frac_state)
-  write_csv(uranium_sources, paste0(data_dir, "/uranium_sources.csv"))
+  write_csv(uranium_sources, URANIUM_SOURCES_FILE)
 
 }
 
@@ -217,7 +195,7 @@ if (FALSE) {
 
 # 4. Process primary and secondary energy ---------------------------------
   # TODO: remove these two after testing
-  inputs_map <- read_csv(paste0(data_dir, "./mappings/inputs_tech_mapping.csv"))
+  inputs_map <- read_csv(INPUTS_MAP_FILE)
   source("./R/0_functions.R")
 
   simple_sources <- in_tech %>%
@@ -765,17 +743,18 @@ if (FALSE) {
     # --------------------------------------------------------------------------
     # Write to file ----
     # --------------------------------------------------------------------------
-    write_parquet(condensed, "gcam_usa_energy.parquet")
+    write_parquet(condensed, out_parquet("energy"))
 
     # write level files separately to improve load times
-    write_parquet(condensed %>% filter(level == 0), "gcam_usa_energy_l0.parquet")
-    write_parquet(condensed %>% filter(level == 1), "gcam_usa_energy_l1.parquet")
-    write_parquet(condensed %>% filter(level == 2), "gcam_usa_energy_l2.parquet")
-    write_parquet(condensed %>% filter(level == 3), "gcam_usa_energy_l3.parquet")     # | level == 4
+    write_parquet(condensed %>% filter(level == 0), out_parquet("energy_l0"))
+    write_parquet(condensed %>% filter(level == 1), out_parquet("energy_l1"))
+    write_parquet(condensed %>% filter(level == 2), out_parquet("energy_l2"))
+    write_parquet(condensed %>% filter(level == 3), out_parquet("energy_l3"))     # | level == 4
 
     # write the processed node label and layout info
-    write_parquet(nodes, "gcam_usa_energy_nodes.parquet")
-    write_parquet(primary_ranks, "gcam_usa_energy_primary_rank.parquet")
+    write_parquet(nodes, out_parquet("energy_nodes"))
+    write_parquet(primary_ranks, out_parquet("energy_primary_rank"))
+
     # share of the US corn and oilcrop harvest that becomes biofuel feedstock;
     # 4_energy_water.R uses it to pass crop irrigation water on to the biofuel
     # nodes. Feedstock use is reported by state (in Mt, under an EJ label) and
@@ -801,8 +780,8 @@ if (FALSE) {
     # --------------------------------------------------------------------------
     source("./R/0_functions.R")      # TODO: remove after testing
     # load from pre-processed file
-    condensed <- read_parquet("gcam_usa_energy.parquet")
-    nodes     <- read_parquet("gcam_usa_energy_nodes.parquet")
+    condensed <- read_parquet(out_parquet("energy"))
+    nodes     <- read_parquet(out_parquet("energy_nodes"))
 
     DISPLAY_LEVEL <- 3  # TODO: remove after testing; lower value less detail
     SCENARIO      <- "rcp45hotter_ssp5"
