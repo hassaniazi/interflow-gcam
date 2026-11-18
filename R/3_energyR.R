@@ -776,6 +776,25 @@ if (FALSE) {
     # write the processed node label and layout info
     write_parquet(nodes, "gcam_usa_energy_nodes.parquet")
     write_parquet(primary_ranks, "gcam_usa_energy_primary_rank.parquet")
+    # share of the US corn and oilcrop harvest that becomes biofuel feedstock;
+    # 4_energy_water.R uses it to pass crop irrigation water on to the biofuel
+    # nodes. Feedstock use is reported by state (in Mt, under an EJ label) and
+    # the harvest only for the USA, so the share is national.
+    biofuel_crop_share <- in_by_tech %>%
+      gather_years() %>%
+      filter(region %in% states, year %in% FUTURE_YEARS,
+             input %in% c("regional corn", "regional oilcrop")) %>%
+      mutate(crop = if_else(input == "regional corn", "Corn", "OilCrop")) %>%
+      group_by(scenario, year, crop) %>%
+      summarize(feedstock = sum(value), .groups = "drop") %>%
+      left_join(out_by_tech %>%
+                  gather_years() %>%
+                  filter(region == "USA", sector %in% names(CROP_BIOFUEL), output == sector) %>%
+                  group_by(scenario, year, crop = sector) %>%
+                  summarize(harvest = sum(value), .groups = "drop"),
+                by = c("scenario", "year", "crop")) %>%
+      mutate(share = pmin(feedstock / harvest, 1), year = as.integer(year))
+    write_parquet(biofuel_crop_share, out_parquet("biofuel_crop_share"))
 
     # --------------------------------------------------------------------------
     # Test Display ----
