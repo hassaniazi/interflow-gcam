@@ -77,6 +77,12 @@ electricity,biomass,biomass (conv) (recirculating),regional biomass,Biomass,Biom
 electricity,biomass,biomass (IGCC) (dry cooling),regional biomass,Biomass,Biomass IGCC,Dry Cooling,Electricity,Electricity,Electricity,Electricity
 electricity,biomass,biomass (IGCC) (recirculating),regional biomass,Biomass,Biomass IGCC,Recirculating,Electricity,Electricity,Electricity,Electricity
 electricity,biomass,biomass (IGCC) (seawater),regional biomass,Biomass,Biomass IGCC,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (IGCC CCS) (dry cooling),regional biomass,Biomass,Biomass IGCC CCS,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (IGCC CCS) (recirculating),regional biomass,Biomass,Biomass IGCC CCS,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (IGCC CCS) (seawater),regional biomass,Biomass,Biomass IGCC CCS,Seawater,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (conv CCS) (dry cooling),regional biomass,Biomass,Biomass Conv CCS,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (conv CCS) (recirculating),regional biomass,Biomass,Biomass Conv CCS,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,biomass,biomass (conv CCS) (seawater),regional biomass,Biomass,Biomass Conv CCS,Seawater,Electricity,Electricity,Electricity,Electricity
 electricity,coal,coal (conv pul) (cooling pond),regional coal,Coal,Coal Conv Pul,Cooling Pond,Electricity,Electricity,Electricity,Electricity
 electricity,coal,coal (conv pul) (dry cooling),regional coal,Coal,Coal Conv Pul,Dry Cooling,Electricity,Electricity,Electricity,Electricity
 electricity,coal,coal (conv pul) (once through),regional coal,Coal,Coal Conv Pul,Once Through,Electricity,Electricity,Electricity,Electricity
@@ -84,6 +90,7 @@ electricity,coal,coal (conv pul) (recirculating),regional coal,Coal,Coal Conv Pu
 electricity,coal,coal (conv pul) (seawater),regional coal,Coal,Coal Conv Pul,Seawater,Electricity,Electricity,Electricity,Electricity
 electricity,coal,coal (conv pul CCS) (dry cooling),regional coal,Coal,Coal Conv Pul CCS,Dry Cooling,Electricity,Electricity,Electricity,Electricity
 electricity,coal,coal (conv pul CCS) (recirculating),regional coal,Coal,Coal Conv Pul CCS,Recirculating,Electricity,Electricity,Electricity,Electricity
+electricity,coal,coal (conv pul CCS) (seawater),regional coal,Coal,Coal Conv Pul CCS,Seawater,Electricity,Electricity,Electricity,Electricity
 electricity,coal,coal (IGCC) (dry cooling),regional coal,Coal,Coal IGCC,Dry Cooling,Electricity,Electricity,Electricity,Electricity
 electricity,coal,coal (IGCC CCS) (dry cooling),regional coal,Coal,Coal IGCC CCS,Dry Cooling,Electricity,Electricity,Electricity,Electricity
 electricity,coal,coal (IGCC CCS) (recirculating),regional coal,Coal,Coal IGCC CCS,Recirculating,Electricity,Electricity,Electricity,Electricity
@@ -91,6 +98,7 @@ electricity,coal,coal (IGCC CCS) (seawater),regional coal,Coal,Coal IGCC CCS,Sea
 electricity,geothermal,geothermal (recirculating),geothermal,Geothermal,Geothermal,Geothermal,Electricity,Electricity,Electricity,Electricity
 electricity,hydro,hydro,water_td_elec_C,Hydropower,Hydropower,Hydropower,Electricity,Electricity,Electricity,Electricity
 electricity,refined liquids,refined liquids (CC) (dry cooling),refined liquids industrial,Liquid Fuels,Liquid Fuels CC,Dry Cooling,Electricity,Electricity,Electricity,Electricity
+electricity,refined liquids,refined liquids (CC CCS) (dry cooling),refined liquids industrial,Liquid Fuels,Liquid Fuels CC CCS,Dry Cooling,Electricity,Electricity,Electricity,Electricity
 electricity,gas,gas (CT) (cooling pond),wholesale gas,Natural Gas,Gas CT,Cooling Pond,Electricity,Electricity,Electricity,Electricity
 electricity,gas,gas (CT) (dry cooling),wholesale gas,Natural Gas,Gas CT,Dry Cooling,Electricity,Electricity,Electricity,Electricity
 electricity,gas,gas (CT) (recirculating),wholesale gas,Natural Gas,Gas CT,Recirculating,Electricity,Electricity,Electricity,Electricity

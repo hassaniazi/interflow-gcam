@@ -743,17 +743,20 @@ if (FALSE) {
     # --------------------------------------------------------------------------
     # Write to file ----
     # --------------------------------------------------------------------------
-    write_parquet(condensed, out_parquet("energy"))
+    if (UPDATE_DATA) {
+      write_parquet(condensed, out_parquet("energy"))
 
-    # write level files separately to improve load times
-    write_parquet(condensed %>% filter(level == 0), out_parquet("energy_l0"))
-    write_parquet(condensed %>% filter(level == 1), out_parquet("energy_l1"))
-    write_parquet(condensed %>% filter(level == 2), out_parquet("energy_l2"))
-    write_parquet(condensed %>% filter(level == 3), out_parquet("energy_l3"))     # | level == 4
+      # write level files separately to improve load times
+      write_parquet(condensed %>% filter(level == 0), out_parquet("energy_l0"))
+      write_parquet(condensed %>% filter(level == 1), out_parquet("energy_l1"))
+      write_parquet(condensed %>% filter(level == 2), out_parquet("energy_l2"))
+      write_parquet(condensed %>% filter(level == 3), out_parquet("energy_l3"))     # | level == 4
 
-    # write the processed node label and layout info
-    write_parquet(nodes, out_parquet("energy_nodes"))
-    write_parquet(primary_ranks, out_parquet("energy_primary_rank"))
+      # write the processed node label and layout info
+      write_parquet(nodes, out_parquet("energy_nodes"))
+      write_parquet(primary_ranks, out_parquet("energy_primary_rank"))
+    }
+
 
     # share of the US corn and oilcrop harvest that becomes biofuel feedstock;
     # 4_energy_water.R uses it to pass crop irrigation water on to the biofuel
@@ -773,7 +776,7 @@ if (FALSE) {
                   summarize(harvest = sum(value), .groups = "drop"),
                 by = c("scenario", "year", "crop")) %>%
       mutate(share = pmin(feedstock / harvest, 1), year = as.integer(year))
-    write_parquet(biofuel_crop_share, out_parquet("biofuel_crop_share"))
+    if (UPDATE_DATA) write_parquet(biofuel_crop_share, out_parquet("biofuel_crop_share"))
 
     # --------------------------------------------------------------------------
     # Test Display ----
