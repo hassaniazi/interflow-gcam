@@ -467,7 +467,7 @@ rank_change_ind %>%
     title = paste("Change in state industrial energy use rank,", scenario_sel,
                   "from", start_year, "to", end_year),
     x = "State (region)",
-    y = "Rank change (end - start)"
+    y = "Rank change (start - end)"
   ) +
   theme_minimal()
 
@@ -518,15 +518,179 @@ ggplot(rank_change_ind_all,
 
 # 2.2.1.2 - Electricity generation reliance on fossil fuel supplies ----
 
-# Let's start with the most aggregate sankey data (i.e. Level 1)
-elec_gen_df_L1 <- energy_df_L1 %>%
-  filter(source == "Electricity") %>%
+#define fossil fuels
+# All inputs to electricity = "Gen III" "Hydropower" "Natural Gas CC" "Onshore"
+#"PV" "Offshore" "Biomass IGCC" "Biomass Conv" "Coal IGCC CCS" "Gas CT"
+#"Coal Conv Pul" "Gen II LWR" "Natural Gas  CC CCS" "Coal Conv Pul CCS" "CSP"
+# "Geothermal" "Coal IGCC" "Liquid Fuels CC" "Steam"
+
+FOSSIL_FUELS <- c("Natural Gas CC",
+                  "Natural Gas CC CCS",
+                  "Gas CT",
+                  "Coal Conv Pul",
+                  "Coal Conv Pul CCS",
+                  "Coal IGCC",
+                  "Coal IGCC CCS",
+                  "Liquid Fuels CC")
+
+# Let's make a fossil fuel elec gen df(i.e. Level 1)
+FF4_elec_df_L1 <- energy_df_L1 %>%
+  filter(source %in% FOSSIL_FUELS) %>%
+  filter(target == "Electricity") %>%
   select(-c("source_color","target_color","level","diagram")) %>%
   group_by(scenario,region,year) %>%
   mutate(value = sum(value)) %>%
-  select(-target) %>%
+  select(-c("source", "target")) %>%
   distinct() %>%
+  ungroup() %>%
+  rename(FF4_elec_value = value)
+# Then make a total energy for elec gen df (i.e. Level 1)
+NRG4_elec_gen_df_L1 <- energy_df_L1 %>%
+  filter(target == "Electricity") %>%
+  select(-c("source_color","target_color","level","diagram")) %>%
+  group_by(scenario,region,year) %>%
+  mutate(value = sum(value)) %>%
+  select(-source) %>%
+  distinct() %>%
+  ungroup() %>%
+  rename(energy4_elec_total_value = value) %>%
+  select(-target)
+# Let's calculate Elec Gen reliance on FF now (combine the files)
+elec_ff_reliance_df <- FF4_elec_df_L1 %>%
+  left_join(NRG4_elec_gen_df_L1) %>%
+  mutate(elec_ff_reliance = FF4_elec_value / energy4_elec_total_value)
+#our FF representation wasn't right, we were getting values >1 for reliance
+#this is because we were using elec gen (which doesn't include losses)
+#since we are just looking at energy inputs for reliance, we made a new df
+#for energy inputs to elec (elec as target)
+
+#Some scenarios where 100% of elec gen in DC is fossil fuel, but no higher
+##Plotting Heatmap:
+# Plotting USA Heatmap for scenario and year
+# Start by selecting the scenario and year
+scen_select_FF <- "rcp85cooler_ssp5"
+year_select_FF   <- 2050
+# prep df with earlier inputs
+FF_reliance_sel <- elec_ff_reliance_df %>%
+  filter(scenario == scen_select_FF,
+         year     == year_select_FF) %>%
+  select(-c("FF4_elec_value","energy4_elec_total_value")) %>%
+  rename(value = "elec_ff_reliance")
+# Map region abbreviations -> state names
+state_vals_named_FF_reliance <- FF_reliance_sel %>%
+  left_join(state_lookup, by = "region") #state look up defined up above
+
+# Check any regions that didn't match (e.g., DC, PR)
+missing <- state_vals_named_FF_reliance %>%
+  filter(is.na(state_name))
+if (nrow(missing) > 0) {
+  print(missing)
+}
+# Get US map data and join
+map_df_FF_reliance <- us_map %>% #us_map defined earlier (not specific)
+  left_join(state_vals_named_FF_reliance, by = "state_name")
+# 5. Plot the map
+ggplot(map_df_FF_reliance, aes(x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill = value), color = "white", linewidth = 0.2) +
+  coord_fixed(1.3) +
+  scale_fill_viridis_c(option = "C",
+                       limits = c(0, 1)
+  ) +
+  labs(
+    title = paste("Electricity Generation Reliance on FF by state -", scen_select_FF, "year", year_select_FF),
+    fill  = "Value (EJ)"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(hjust = 0.5)
+  )
+
+## Data frame Comparing National Rankings
+# Start by selecting the years to compare
+start_year <- 2020
+end_year   <- 2050
+# filter fossil fuel reliance for elec gen for the 2 comparison years, and calculate ranks
+elec_ff_reliance_rank_two_years <- elec_ff_reliance_df %>%
+  select(-c("FF4_elec_value","energy4_elec_total_value")) %>%
+  rename(value = "elec_ff_reliance")%>%
+  filter(year %in% c(start_year, end_year)) %>%
+  group_by(scenario, year) %>%
+  mutate(
+    rank = rank(-value, ties.method = "min")  # descending: largest value gets rank 1
+  ) %>%
   ungroup()
+
+# calculate how the rank has changed from the start year to end year
+rank_change_elec_ff_reliance <- elec_ff_reliance_rank_two_years %>%
+  group_by(scenario, region) %>%
+  summarize(
+    rank_start = rank[year == start_year],
+    rank_end   = rank[year == end_year],
+    .groups    = "drop"
+  ) %>%
+  mutate(rank_diff = rank_start - rank_end)
+
+# visualization for the change "rank" for 1 scenario
+scenario_sel <- "rcp45cooler_ssp3"
+rank_change_elec_ff_reliance %>%
+  filter(scenario == scenario_sel) %>%
+  ggplot(aes(x = reorder(region, rank_diff),
+             y = rank_diff)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = paste("Change in Electricity Generation Reliance on FF rank,", scenario_sel,
+                  "from", start_year, "to", end_year),
+    x = "State (region)",
+    y = "Rank change (start - end)"
+  ) +
+  theme_minimal()
+
+# Looking across scenarios at average and variability of rank diff per region:
+rank_change_elec_ff_reliance_summary <- rank_change_elec_ff_reliance %>%
+  group_by(region) %>%
+  summarize(
+    mean_rank_diff = mean(rank_diff, na.rm = TRUE),
+    sd_rank_diff   = sd(rank_diff, na.rm = TRUE),
+    min_rank_diff  = min(rank_diff, na.rm = TRUE),
+    max_rank_diff  = max(rank_diff, na.rm = TRUE),
+    n_scenarios    = n(),
+    .groups        = "drop"
+  )
+
+
+# consistency of direction (gainers vs losers)
+rank_change_elec_ff_reliance_direction <- rank_change_elec_ff_reliance %>%
+  group_by(region) %>%
+  summarize(
+    n_up   = sum(rank_diff > 0, na.rm = TRUE),  # # scenarios where rank improved (moved up)
+    n_down = sum(rank_diff < 0, na.rm = TRUE),  # # where rank worsened
+    n_zero = sum(rank_diff == 0, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Putting all the info into 1
+rank_change_elec_ff_reliance_all <- rank_change_elec_ff_reliance_summary %>%
+  left_join(rank_change_elec_ff_reliance_direction, by = "region")
+
+# Visualizing this info:
+ggplot(rank_change_elec_ff_reliance_all,
+       aes(x = mean_rank_diff,
+           y = sd_rank_diff,
+           label = region)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey60") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey60") +
+  geom_text(size = 3, vjust = -0.5) +
+  labs(
+    title = paste("State rank change in Electricity Generation reliance on FF, across scenarios",
+                  "(from", start_year, "to", end_year, ")"),
+    x = "Mean rank change (start - end, negative = moves down)",
+    y = "SD of rank change across scenarios"
+  ) +
+  theme_minimal()
+
 
 #### Plot Sankeys ----
 source("./R/0_functions.R")
